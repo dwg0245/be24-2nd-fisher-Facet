@@ -3,9 +3,7 @@
 <template>
   <main class="max-w-[1200px] mx-auto px-6 py-12">
     <!-- HERO -->
-    <section
-      class="glass rounded-3xl p-10 md:p-16 border-none shadow-sm overflow-hidden relative mb-12"
-    >
+    <section class="glass rounded-3xl p-10 md:p-16 border-none shadow-sm overflow-hidden relative mb-12">
       <div class="absolute -top-24 -right-24 w-64 h-64 bg-[#A39382]/10 blur-3xl rounded-full"></div>
 
       <div class="relative z-10 text-center">
@@ -21,15 +19,11 @@
         <div class="max-w-xl mx-auto flex flex-col md:flex-row gap-3">
           <div class="relative flex-1">
             <span class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400">🔎</span>
-            <input
-              type="text"
-              placeholder="궁금한 내용을 입력하세요"
-              class="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-5 text-sm input-focus transition shadow-inner"
-            />
+            <input type="text" placeholder="궁금한 내용을 입력하세요"
+              class="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-5 text-sm input-focus transition shadow-inner" />
           </div>
           <button
-            class="btn-primary font-bold rounded-2xl px-8 py-5 text-[11px] tracking-widest uppercase shadow-lg"
-          >
+            class=" text-black font-bold rounded-2xl px-8 py-5 text-[11px] tracking-widest uppercase shadow-lg hover:bg transition-all">
             Search
           </button>
         </div>
@@ -69,9 +63,7 @@
 
       <div class="glass rounded-3xl overflow-hidden border-none shadow-sm">
         <details class="border-b border-gray-50 group" open>
-          <summary
-            class="cursor-pointer px-8 py-6 flex items-center justify-between gap-3 hover:bg-gray-50 transition"
-          >
+          <summary class="cursor-pointer px-8 py-6 flex items-center justify-between gap-3 hover:bg-gray-50 transition">
             <p class="font-medium text-gray-800">낙찰된 상품의 취소가 가능한가요?</p>
             <span class="text-gray-300 group-open:rotate-180 transition-transform">↓</span>
           </summary>
@@ -83,9 +75,7 @@
         </details>
 
         <details class="border-b border-gray-50 group">
-          <summary
-            class="cursor-pointer px-8 py-6 flex items-center justify-between gap-3 hover:bg-gray-50 transition"
-          >
+          <summary class="cursor-pointer px-8 py-6 flex items-center justify-between gap-3 hover:bg-gray-50 transition">
             <p class="font-medium text-gray-800">주얼리 전문 감정서가 포함되나요?</p>
             <span class="text-gray-300 group-open:rotate-180 transition-transform">↓</span>
           </summary>
@@ -97,9 +87,7 @@
         </details>
 
         <details class="border-b border-gray-50 group">
-          <summary
-            class="cursor-pointer px-8 py-6 flex items-center justify-between gap-3 hover:bg-gray-50 transition"
-          >
+          <summary class="cursor-pointer px-8 py-6 flex items-center justify-between gap-3 hover:bg-gray-50 transition">
             <p class="font-medium text-gray-800">해외 배송이 가능한가요?</p>
             <span class="text-gray-300 group-open:rotate-180 transition-transform">↓</span>
           </summary>
@@ -124,19 +112,13 @@
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch">
         <!-- Form Area -->
         <div class="lg:col-span-7">
-          <form
-            class="space-y-6 h-full flex flex-col justify-between"
-            onsubmit="event.preventDefault()"
-          >
+          <form class="space-y-6 h-full flex flex-col justify-between" onsubmit="event.preventDefault()">
             <div class="space-y-6">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                  <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400"
-                    >Category</label
-                  >
+                  <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Category</label>
                   <select
-                    class="w-full bg-white border border-gray-200 rounded-lg px-4 py-4 text-sm focus:border-[#A39382] outline-none cursor-pointer"
-                  >
+                    class="w-full bg-white border border-gray-200 rounded-lg px-4 py-4 text-sm focus:border-[#A39382] outline-none cursor-pointer">
                     <option>결제 및 입찰</option>
                     <option>배송 및 환불</option>
                     <option>상품 감정 문의</option>
@@ -144,45 +126,29 @@
                   </select>
                 </div>
                 <div class="space-y-2">
-                  <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400"
-                    >Email Address</label
-                  >
-                  <input
-                    type="email"
-                    placeholder="example@facet.com"
-                    class="w-full bg-white border border-gray-200 rounded-lg px-4 py-4 text-sm focus:border-[#A39382] outline-none"
-                  />
+                  <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Email Address</label>
+                  <input type="email" placeholder="example@facet.com"
+                    class="w-full bg-white border border-gray-200 rounded-lg px-4 py-4 text-sm focus:border-[#A39382] outline-none" />
                 </div>
               </div>
               <div class="space-y-2">
-                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400"
-                  >Subject</label
-                >
-                <input
-                  type="text"
-                  placeholder="문의 제목을 입력하세요"
-                  class="w-full bg-white border border-gray-200 rounded-lg px-4 py-4 text-sm focus:border-[#A39382] outline-none"
-                />
+                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Subject</label>
+                <input type="text" placeholder="문의 제목을 입력하세요"
+                  class="w-full bg-white border border-gray-200 rounded-lg px-4 py-4 text-sm focus:border-[#A39382] outline-none" />
               </div>
               <div class="space-y-2">
-                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400"
-                  >Message Details</label
-                >
-                <textarea
-                  rows="10"
-                  placeholder="구체적인 내용을 입력해 주세요."
-                  class="w-full bg-white border border-gray-200 rounded-lg px-4 py-4 text-sm focus:border-[#A39382] outline-none resize-none"
-                ></textarea>
+                <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Message Details</label>
+                <textarea rows="10" placeholder="구체적인 내용을 입력해 주세요."
+                  class="w-full bg-white border border-gray-200 rounded-lg px-4 py-4 text-sm focus:border-[#A39382] outline-none resize-none"></textarea>
               </div>
             </div>
-            <button
-              type="submit"
-              class="w-full btn-primary py-5 rounded-lg text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg mt-6"
-            >
+            <button type="submit"
+              class="w-full text-black py-5 rounded-lg text-[11px] font-bold uppercase tracking-[0.3em] shadow-lg mt-6 ">
               Send Message
             </button>
           </form>
         </div>
+
 
         <!-- Contact Info (Balanced Sidebar) -->
         <div class="lg:col-span-5">
@@ -191,8 +157,7 @@
             <div class="space-y-10 flex-grow">
               <div class="flex items-start space-x-4">
                 <div
-                  class="bg-[#A39382]/10 p-3 rounded-full text-xl leading-none flex items-center justify-center w-12 h-12"
-                >
+                  class="bg-[#A39382]/10 p-3 rounded-full text-xl leading-none flex items-center justify-center w-12 h-12">
                   📞
                 </div>
                 <div>
@@ -207,8 +172,7 @@
               </div>
               <div class="flex items-start space-x-4">
                 <div
-                  class="bg-[#A39382]/10 p-3 rounded-full text-xl leading-none flex items-center justify-center w-12 h-12"
-                >
+                  class="bg-[#A39382]/10 p-3 rounded-full text-xl leading-none flex items-center justify-center w-12 h-12">
                   ✉️
                 </div>
                 <div>
@@ -244,9 +208,7 @@
                     </p>
                   </div>
                 </div>
-                <p
-                  class="text-xs leading-relaxed text-gray-400 font-light italic mt-6 pt-4 border-t border-gray-50/50"
-                >
+                <p class="text-xs leading-relaxed text-gray-400 font-light italic mt-6 pt-4 border-t border-gray-50/50">
                   긴급한 보안 관련 문의나 가품 신고는 24시간 연중무휴로 접수되며 최우선적으로
                   처리됩니다.
                 </p>
@@ -255,6 +217,66 @@
           </div>
         </div>
       </div>
+      
+      <!-- NEW SECTION: Inquiry List -->
+      <section>
+        <div class="flex justify-between items-end mb-6 border-b border-gray-100 pb-4 mt-16">
+          <div>
+            <h2 class="text-xl font-bold mb-2">내 문의 내역</h2>
+            <p class="text-xs text-gray-400">최근 3개월간의 문의 기록입니다.</p>
+          </div>
+          <button class="text-xs font-medium text-gray-500 hover:text-black flex items-center">
+            전체보기
+            <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Inquiry Item 1 (Completed) -->
+          <div
+            class="group border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-all cursor-pointer bg-white">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex space-x-2 items-center">
+                <span class="status-badge status-completed tracking-tighter">답변 완료</span>
+                <span class="text-[10px] text-gray-400 font-medium">결제 및 입찰</span>
+              </div>
+              <span class="text-[11px] text-gray-300">2024.02.26</span>
+            </div>
+            <h4 class="text-sm font-semibold mb-2 group-hover:underline">입찰한 다이아몬드 링의 잔금 결제 방법 문의</h4>
+            <p class="text-xs text-gray-500 line-clamp-1 mb-0">마이페이지에서 카드 결제 시 자꾸 오류가 발생하는데 무통장 입금이 가능한가요...</p>
+          </div>
+
+          <!-- Inquiry Item 2 (Pending) -->
+          <div
+            class="group border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-all cursor-pointer bg-white">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex space-x-2 items-center">
+                <span class="status-badge status-pending tracking-tighter">답변 대기</span>
+                <span class="text-[10px] text-gray-400 font-medium">배송 문의</span>
+              </div>
+              <span class="text-[11px] text-gray-300">2024.02.27</span>
+            </div>
+            <h4 class="text-sm font-semibold mb-2 group-hover:underline">배송지 변경 요청 (주문번호 #FCT-2024-002)</h4>
+            <p class="text-xs text-gray-500 line-clamp-1 mb-0">이사 일정 때문에 이번 주 금요일까지 배송지를 수정하고 싶습니다.</p>
+          </div>
+
+          <!-- Inquiry Item 3 (Completed) -->
+          <div
+            class="group border border-gray-100 rounded-2xl p-6 hover:border-gray-200 transition-all cursor-pointer bg-white">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex space-x-2 items-center">
+                <span class="status-badge status-completed tracking-tighter">답변 완료</span>
+                <span class="text-[10px] text-gray-400 font-medium">상품 상태 문의</span>
+              </div>
+              <span class="text-[11px] text-gray-300">2024.02.20</span>
+            </div>
+            <h4 class="text-sm font-semibold mb-2 group-hover:underline">GIA 감정서 진위 확인 부탁드립니다.</h4>
+            <p class="text-xs text-gray-500 line-clamp-1 mb-0">업로드해주신 사진 속 감정서 번호가 명확히 보이지 않아 재문의 남깁니다.</p>
+          </div>
+        </div>
+      </section>
     </section>
   </main>
 </template>
@@ -281,6 +303,7 @@ body {
 .font-serif-luxury {
   font-family: 'Cormorant Garamond', serif;
 }
+
 .luxury-font {
   font-family: 'Cinzel', serif;
 }
@@ -330,6 +353,7 @@ body {
 details summary {
   list-style: none;
 }
+
 details summary::-webkit-details-marker {
   display: none;
 }
