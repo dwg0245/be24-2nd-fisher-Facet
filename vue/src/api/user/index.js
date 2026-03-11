@@ -26,4 +26,10 @@ const list = async () =>{
   return res.data;
 }
 
-export default { login, signup , reg, list}
+const kakaoCallBack = async () =>{
+  const res = await api.get("/user/callback")
+  console.log("kakaoCallBack", res)
+  return res
+}
+
+export default { login, signup , reg, list,kakaoCallBack}

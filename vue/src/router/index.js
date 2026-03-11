@@ -168,6 +168,15 @@ const router = createRouter({
           },
           component: () => import('../views/users/Ask.vue'),
         },
+        {
+          path: 'kakaoCallBack',
+          name: 'kakaoCallBack',
+          meta: {
+            title: 'callback',
+            requiresAuth: false,
+          },
+          component: () => import('../views/users/KakaoCallback.vue'),
+        },
       ],
     },
   ],

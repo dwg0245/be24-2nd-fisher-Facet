@@ -198,8 +198,8 @@ const isFormValid = () => {
         <!-- Terms & Conditions -->
         <div class="space-y-4 pt-4 mt-8">
           <div class="flex items-start">
-            <input type="checkbox" id="terms" class="mt-1 w-4 h-4 border-gray-200 rounded" />
-            <label for="terms" class="ml-3 text-[12px] leading-relaxed text-gray-500">
+            <input v-model="isAgreed" type="checkbox" id="terms" class="mt-1 w-4 h-4 border-gray-200 rounded" />
+            <label  for="terms" class="ml-3 text-[12px] leading-relaxed text-gray-500">
               <span class="text-[#1a1a1a] font-medium underline cursor-pointer">이용약관</span> 및
               <span class="text-[#1a1a1a] font-medium underline cursor-pointer"
                 >개인정보 처리방침</span
