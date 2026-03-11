@@ -58,13 +58,13 @@ const router = createRouter({
           component: () => import('../views/auction/Auction_list.vue'),
         },
         {
-          name: 'auction_desc',
-          path: 'auction/auction_desc/:idx',
+          name: 'auction_detail',
+          path: 'auction/detail/:idx',
           meta: {
             title: '경매 상세',
             requiresAuth: false,
           },
-          component: () => import('../views/auction/Auction_desc.vue'),
+          component: () => import('../views/auction/Auction_detail.vue'),
         },
         {
           name: 'auction_end',
