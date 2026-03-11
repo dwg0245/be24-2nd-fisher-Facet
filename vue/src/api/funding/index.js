@@ -1,8 +1,8 @@
 import api from '@/plugins/axiosinterceptor'
 
 const mainfundList = async () => {
-  const res = await api.get('/json/funding_list')
-  console.log('index', res)
+  const res = await api.get('/funding/fundinglist')
+  // console.log('index', res)
   return res.data
 }
 

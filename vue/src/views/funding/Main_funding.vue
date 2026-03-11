@@ -7,7 +7,7 @@ const currentList = reactive([])
 
 const getlist = async () => {
   const res = await api.mainfundList()
-  console.log(res.result)
+  // console.log("res.result", res.result)
 
   if (res.code == 2000) {
     funding_list.push(...res.result)
