@@ -9,11 +9,11 @@ const auctionId = ref(null)
 const auctionDetail = ref(null)
 const startPrice = ref()
 const inputPrice = ref('')
-const currentPrice = ref(startPrice.value)
+const currentPrice = ref()
 let countdown = ref('')
 let isDone = ref(false)
 
-// desc.json 파일 불러오기
+// 경매 상품 DB에서 불러오기
 const getDetail = async () => {
   console.log(route.params.idx)
   auctionId.value = Number(route.params.idx)
@@ -25,90 +25,117 @@ const getDetail = async () => {
 
     auctionDetail.value = res.result
     startPrice.value = auctionDetail.value.startPrice
-    currentPrice.value = startPrice.value
+    currentPrice.value = auctionDetail.value.currentPrice
   } else {
     alert('해당 상품에 대한 desc.json 파일을 불러오지 못함')
   }
 }
 
-// 3. 카운트다운 로직
-const startCountdown = () => {
-  let hours = 0,
-    minutes = 0,
-    seconds = 20
+// 카운트다운 로직
+const startCountdown = (targetDateStr) => {
+  const timer = setInterval(() => {
+    const target = new Date(targetDateStr).getTime() // 목표 시간 (ms)
+    const now = new Date().getTime() // 현재 시간 (ms)
+    const diff = target - now // 남은 시간 (ms)
 
-  setInterval(() => {
-    seconds--
-    if (seconds < 0) {
-      seconds = 59
-      minutes--
-      if (minutes < 0) {
-        minutes = 59
-        hours--
-      }
-    }
-    if (hours < 0) return
-    const h = hours.toString().padStart(2, '0')
-    const m = minutes.toString().padStart(2, '0')
-    const s = seconds.toString().padStart(2, '0')
-    if (h == 0 && m == 0 && s == 0) {
+    // 시간이 종료되었을 때
+    if (diff <= 0) {
+      clearInterval(timer)
       isDone.value = true
+      countdown.value = '0일 00:00:00'
+      return
     }
-    countdown.value = `${h}:${m}:${s}`
+
+    // 시간 단위 계산기
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24)) // 일
+    const h = Math.floor((diff / (1000 * 60 * 60)) % 24)
+      .toString()
+      .padStart(2, '0') // 시
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      .toString()
+      .padStart(2, '0') // 분
+    const s = Math.floor((diff % (1000 * 60)) / 1000)
+      .toString()
+      .padStart(2, '0') // 초
+
+    if (d > 0) {
+      countdown.value = `${d}일 ${h}:${m}:${s}`
+    } else {
+      countdown.value = `${h}:${m}:${s}`
+    }
   }, 1000)
 }
 
-// 시작하자마자 카운트다운 시작
-onMounted(() => {
-  startCountdown()
-  // loadInitialPrice()
-})
-
-// 웹소켓
-let socket = null
-const messages = reactive([])
-const message = ref('')
-onMounted(() => {
-  const wsUri = 'ws://127.0.0.1:8080/ws/chat'
-  socket = new WebSocket(wsUri)
-
-  socket.addEventListener('open', () => {
-    console.log('CONNECTED')
-  })
-
-  socket.addEventListener('message', (e) => {
-    const data = JSON.parse(e.data)
-    console.log('받은 데이터:', data.payload)
-    currentPrice.value = data.payload
-  })
-  socket.addEventListener('close', (e) => {
-    console.log('CLOSED')
-  })
-})
-
-const send = () => {
+// 입찰 기능
+const sendBid = async () => {
+  const bidData = {
+    userIdx: 1,
+    aucProductIdx: auctionId.value,
+    bidPrice: Number(inputPrice.value),
+  }
   if (currentPrice.value < Number(inputPrice.value)) {
     currentPrice.value = Number(inputPrice.value)
-    socket.send(inputPrice.value)
+    try {
+      const res = await api.bid(bidData)
+
+      if (res.data.success) {
+        // 서버에서 업데이트된 상품의 '현재가'를 받아와서 화면에 반영
+        currentPrice.value = res.data.result.bidPrice
+        alert('입찰 성공! 현재 최고가는 ' + currentPrice.value + '원입니다.')
+      }
+    } catch (err) {
+      console.error(err)
+    }
   } else {
     alert('현재 입찰가보다 높은 금액을 입력하세요.')
   }
 }
 
+// // 웹소켓
+// let socket = null
+// const messages = reactive([])
+// const message = ref('')
+// onMounted(() => {
+//   const wsUri = 'ws://127.0.0.1:8080/ws/chat'
+//   socket = new WebSocket(wsUri)
+//
+//   socket.addEventListener('open', () => {
+//     console.log('CONNECTED')
+//   })
+//
+//   socket.addEventListener('message', (e) => {
+//     const data = JSON.parse(e.data)
+//     console.log('받은 데이터:', data.payload)
+//     currentPrice.value = data.payload
+//   })
+//   socket.addEventListener('close', (e) => {
+//     console.log('CLOSED')
+//   })
+// })
+//
+// const send = () => {
+//   if (currentPrice.value < Number(inputPrice.value)) {
+//     currentPrice.value = Number(inputPrice.value)
+//     socket.send(inputPrice.value)
+//   } else {
+//     alert('현재 입찰가보다 높은 금액을 입력하세요.')
+//   }
+// }
+
 const currentTab = ref('Detail')
 onMounted(() => {
-  if (socket) {
-    socket.close()
-  }
   getDetail()
 })
 
-// URL의 파라미터(num)가 바뀔 때마다 getDetail를 다시 실행합니다.
 watch(
-  () => route.params.idx, // num 대신 idx로 수정
-  () => {
-    getDetail()
+  () => auctionDetail.value?.endAt,
+  (newVal) => {
+    if (newVal) {
+      // 데이터가 들어왔을 때만 카운트다운 시작!
+      startCountdown(newVal)
+    }
   },
+  { immediate: true },
 )
 </script>
 
@@ -218,9 +245,9 @@ watch(
                   <span class="text-gray-400 text-xs font-bold tracking-widest">KRW</span>
                 </div>
                 <button
-                  @click="send"
+                  @click="sendBid"
                   class="w-full py-4 bid-button font-bold text-xs tracking-[0.3em] uppercase"
-                  id="send"
+                  id="sendBid"
                 >
                   Place a Bid
                 </button>

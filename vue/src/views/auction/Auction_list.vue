@@ -91,10 +91,16 @@ const goToPage = (num) => {
                 class="w-full h-full object-cover transition duration-700 group-hover:scale-110"
               />
               <div
-                v-if="item.status == 0"
+                v-if="item.status == 'BOFORE'"
                 class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
               >
                 UPCOMING
+              </div>
+              <div
+                v-else-if="item.status == 'END'"
+                class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
+              >
+                END
               </div>
               <div
                 v-else

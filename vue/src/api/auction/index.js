@@ -11,5 +11,9 @@ const detail = async (ListId) => {
   return res.data
 }
 
+const bid = async (bidData) => {
+  const res = await api.post('/auction/bid', bidData)
+  return res.data
+}
 
-export default { auctionList, detail }
+export default { auctionList, detail, bid }
