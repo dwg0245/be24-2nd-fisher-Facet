@@ -1,48 +1,45 @@
 <script setup>
-import { reactive, computed, ref } from 'vue'
-import api from '@/api/auction'
+import { reactive, computed, ref, onMounted } from 'vue'
+import api from '@/api/funding'
 
 const funding_list = reactive([])
+const currentPage = ref(0)
+const currentSize = ref(0)
+const totalCount = ref(0)
+const totalPage = ref(0)
 
-const getlist = async () => {
-  const res = await api.auctionList()
-  console.log(res.result)
+const currentFilter = ref('all')
+const currentCategories = ref('all')
+
+const getlist = async (page, currentFilter, currentCategories) => {
+
+  const res = await api.fundingPageList(page,currentFilter,currentCategories)
+  console.log("res", res.result)
+
+  funding_list.length = 0
 
   if (res.code == 2000) {
-    funding_list.push(...res.result)
+    funding_list.push(...res.result.fundingList)
+    console.log(funding_list)
+    currentPage.value = res.result.currentPage
+    currentSize.value = res.result.currentSize
+    totalCount.value = res.result.totalCount
+    totalPage.value = res.result.totalPage
+    console.log(" 성공")
   } else {
     alert('list.json 파일을 불러오지 못하였음')
   }
 }
-getlist()
 
-const currentFilter = ref('all')
-const currentItem = () => {
-  if (currentFilter.value === 'all') {
-    funding_list.sort((a, b) => a.idx - b.idx)
-  } else if (currentFilter.value === 'price') {
-    funding_list.sort((a, b) => a.price - b.price)
-  } else if (currentFilter.value === 'imminent') {
-    funding_list.sort((a, b) => a.days - b.days)
-  }
-  return funding_list
-}
-
-const currentPage = ref(1)
-
-// 화면에 실제로 그려질 '현재 페이지 아이템들'을 계산
-const paginatedItems = computed(() => {
-  const start = (currentPage.value - 1) * 12
-  const end = start + 12
-  return funding_list.slice(start, end)
-})
-
-console.log('paginatedItems', paginatedItems)
 
 // 6. 숫자를 '01' 형태로 포맷팅
 const formatNumber = (num) => {
   return String(num).padStart(2, '0')
 }
+
+onMounted(() => {
+  getlist(0,'all','all')
+})
 </script>
 
 <template class="flex flex-col h-screen">
@@ -53,11 +50,12 @@ const formatNumber = (num) => {
           Categories
         </h2>
         <ul class="space-y-6 text-gray-500">
-          <li class="sidebar-item sidebar-active cursor-pointer">ALL ARCHIVES</li>
-          <li class="sidebar-item cursor-pointer">HIGH JEWELRY</li>
-          <li class="sidebar-item cursor-pointer">HERITAGE WATCH</li>
-          <li class="sidebar-item cursor-pointer">RARE GEMSTONES</li>
-          <li class="sidebar-item cursor-pointer">ART PIECES</li>
+          <li @click="currentCategories = 'all', getlist(0,'all',currentCategories)" class="sidebar-item sidebar-active cursor-pointer">ALL ARCHIVES</li>
+          <li @click="currentCategories = 'ring', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Ring</li>
+          <li @click="currentCategories = 'Necklace', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Necklace</li>
+          <li @click="currentCategories = 'Bracelet', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Bracelet</li>
+          <li @click="currentCategories = 'Earrings', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Earrings</li>
+          <li @click="currentCategories = 'Anklet', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Anklet</li>
         </ul>
       </div>
 
@@ -67,27 +65,15 @@ const formatNumber = (num) => {
         </h2>
         <div class="space-y-4">
           <label class="flex items-center space-x-3 cursor-pointer group">
-            <input
-              type="radio"
-              name="status-filter"
-              @click="((currentFilter = 'all'), currentItem())"
-              class="w-3 h-3 accent-[#A39382] cursor-pointer"
-            />
-            <span class="text-xs text-gray-500 group-hover:text-black transition"
-              >현재 진행 중</span
-            >
+            <input type="radio" name="status-filter" 
+              @click="getlist(0, 'all',currentCategories)" class="w-3 h-3 accent-[#A39382] cursor-pointer" />
+            <span class="text-xs text-gray-500 group-hover:text-black transition">현재 진행 중</span>
           </label>
 
           <label class="flex items-center space-x-3 cursor-pointer group">
-            <input
-              type="radio"
-              name="status-filter"
-              @click="((currentFilter = 'imminent'), currentItem())"
-              class="w-3 h-3 accent-[#A39382] cursor-pointer"
-            />
-            <span class="text-xs text-gray-500 group-hover:text-black transition"
-              >마감 임박 순</span
-            >
+            <input type="radio" name="status-filter" 
+              @click="getlist(0, 'imminent',currentCategories)" class="w-3 h-3 accent-[#A39382] cursor-pointer" />
+            <span class="text-xs text-gray-500 group-hover:text-black transition">마감 임박 순</span>
           </label>
         </div>
       </div>
@@ -96,31 +82,27 @@ const formatNumber = (num) => {
     <main class="flex-1 overflow-y-auto p-12 bg-[#fafafa]">
       <div class="flex justify-between items-center mb-12">
         <p class="text-[12px] text-gray-400 tracking-wider">
-          SHOWING <span class="text-black font-bold">{{ funding_list.length }}</span> UNIQUE PIECES
+          SHOWING <span class="text-black font-bold">{{ totalCount }}</span> UNIQUE PIECES
         </p>
-        <select
-          v-model="currentFilter"
-          @change="currentItem"
-          class="custom-select bg-white border border-gray-100 rounded-full px-6 py-2 text-[11px] font-bold outline-none w-40 tracking-tighter cursor-pointer hover:border-[#A39382] transition"
-        >
-          <option value="all">최근 등록순</option>
-          <option value="price">낮은 가격순</option>
-          <option value="imminent">마감 임박순</option>
+        <select v-model="currentFilter" @change="getlist(0, currentFilter,currentCategories)"
+          class="custom-select bg-white border border-gray-100 rounded-full px-6 py-2 text-[11px] font-bold outline-none w-40 tracking-tighter cursor-pointer hover:border-[#A39382] transition">
+          <option
+            value="all">최근
+            등록순</option>
+          <option  value="price">
+            낮은 가격순</option>
+          <option 
+           value="imminent">마감 임박순</option>
         </select>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-10">
-        <div
-          class="premium-card bg-white rounded-3xl overflow-hidden cursor-pointer group"
-          v-for="item in paginatedItems"
-        >
+        <div class="premium-card bg-white rounded-3xl overflow-hidden cursor-pointer group"
+          v-for="item in funding_list">
           <!-- {{ item }} -->
           <RouterLink :to="`/funding/funding_desc/${item.idx}`" class="block">
             <div class="relative overflow-hidden aspect-[4/5]">
-              <img
-                :src="item.img"
-                class="w-full h-full object-cover transition duration-700 group-hover:scale-110"
-              />
+              <img :src="item.img" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" />
               <div class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold">
                 LIVE
               </div>
@@ -152,31 +134,16 @@ const formatNumber = (num) => {
       <div class="mt-24 flex justify-center items-center space-x-8">
         <button class="text-gray-300 hover:text-[#A39382] transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              d="M15 19l-7-7 7-7"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
+            <path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
         <div class="flex space-x-6 text-[11px] font-bold tracking-widest">
-          <span
-            v-for="item in Math.ceil(funding_list.length / 12)"
-            :key="pageNo"
-            @click="currentPage = item"
-            class="text-[#A39382] border-[#A39382] pb-1"
-            >{{ formatNumber(item) }}</span
-          >
+          <span v-for="item in totalPage" :key="pageNo" @click="getlist(item - 1,currentFilter,currentCategories)"
+            class="text-[#A39382] border-[#A39382] pb-1">{{ formatNumber(item) }}</span>
         </div>
         <button class="text-gray-300 hover:text-[#A39382] transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              d="M9 5l7 7-7 7"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
+            <path d="M9 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
       </div>
