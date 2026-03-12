@@ -5,24 +5,25 @@ import api from '@/api/auction'
 const auction_list = ref([])
 const totalPages = ref(0)
 const totalCount = ref(0)
-const currentPage = ref(1)
+const currentPage = ref(0)
 
 const getlist = async () => {
   const res = await api.auctionList(currentPage.value)
-  auction_list.value = res.auctionList;
-  totalPages.value = res.totalPage - 1;
-  totalCount.value = res.totalCount;
-  currentPage.value = res.currentPage;
-  console.log(auction_list.value)
+  const result = res.result
+  auction_list.value = result.auctionList
+  totalPages.value = result.totalPage - 1
+  totalCount.value = result.totalCount
+  currentPage.value = result.currentPage
+  console.log('auction >> ', auction_list.value)
 }
 onMounted(() => {
   getlist()
 })
 const goToPage = (num) => {
-  currentPage.value = num; // 화면상의 번호 업데이트
-  getlist(); // 페이지 변경 시 목록 다시 불러오기
-  window.scrollTo(0, 0); // 페이지 변경 시 상단으로 스크롤
-};
+  currentPage.value = num // 화면상의 번호 업데이트
+  getlist() // 페이지 변경 시 목록 다시 불러오기
+  window.scrollTo(0, 0) // 페이지 변경 시 상단으로 스크롤
+}
 </script>
 
 <template class="flex flex-col h-screen">
@@ -65,7 +66,8 @@ const goToPage = (num) => {
     <main class="flex-1 overflow-y-auto p-12 bg-[#fafafa]">
       <div class="flex justify-between items-center mb-12">
         <p class="text-[12px] text-gray-400 tracking-wider">
-          SHOWING <span class="text-black font-bold">{{ totalCount.toLocaleString() }}</span> UNIQUE PIECES
+          SHOWING <span class="text-black font-bold">{{ totalCount.toLocaleString() }}</span> UNIQUE
+          PIECES
         </p>
         <select
           class="custom-select bg-white border border-gray-100 rounded-full px-6 py-2 text-[11px] font-bold outline-none w-40 tracking-tighter cursor-pointer hover:border-[#A39382] transition"
@@ -82,17 +84,22 @@ const goToPage = (num) => {
           v-for="item in auction_list"
         >
           <!-- {{ item }} -->
-          <RouterLink :to="`/auction/auction_desc/${item.idx}`" class="block">
+          <RouterLink :to="`/auction/detail/${item.idx}`" class="block">
             <div class="relative overflow-hidden aspect-[4/5]">
-              
               <img
                 :src="item.image"
                 class="w-full h-full object-cover transition duration-700 group-hover:scale-110"
               />
-              <div v-if="item.status == 0" class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold">
+              <div
+                v-if="item.status == 0"
+                class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
+              >
                 UPCOMING
               </div>
-              <div v-else class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold">
+              <div
+                v-else
+                class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
+              >
                 LIVE
               </div>
             </div>
@@ -105,8 +112,8 @@ const goToPage = (num) => {
               </h3>
               <div class="flex justify-between pt-2 items-end border-t border-gray-50">
                 <div>
-                  <p class="text-[9px] text-gray-300 uppercase tracking-widest mb-1">Start Bid</p>
-                  <p class="text-[15px] font-bold">₩ {{ (item.startPrice.toLocaleString()) }}</p>
+                  <p class="text-[9px] text-gray-300 uppercase tracking-widest mb-1">경매 시작가</p>
+                  <p class="text-[15px] font-bold">₩ {{ item.startPrice.toLocaleString() }}</p>
                 </div>
                 <div class="text-right">
                   <p class="text-[9px] text-[#A39382] font-bold mb-1 uppercase tracking-widest">
@@ -132,19 +139,19 @@ const goToPage = (num) => {
           </svg>
         </button>
         <div class="flex space-x-6 text-[11px] font-bold tracking-widest">
-  <span 
-    v-for="pageNumber in totalPages" 
-    :key="pageNumber-1"
-    @click="goToPage(pageNumber)"
-    class="cursor-pointer transition pb-1"
-    :class="{
-      'text-[#A39382] border-b border-[#A39382]': currentPage === pageNumber,
-      'text-gray-300 hover:text-black': currentPage  !== pageNumber
-    }"
-  >
-    {{ String(pageNumber).padStart(2, '0')}}
-  </span>
-</div>
+          <span
+            v-for="pageNumber in totalPages"
+            :key="pageNumber - 1"
+            @click="goToPage(pageNumber)"
+            class="cursor-pointer transition pb-1"
+            :class="{
+              'text-[#A39382] border-b border-[#A39382]': currentPage === pageNumber,
+              'text-gray-300 hover:text-black': currentPage !== pageNumber,
+            }"
+          >
+            {{ String(pageNumber).padStart(2, '0') }}
+          </span>
+        </div>
         <button class="text-gray-300 hover:text-[#A39382] transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
