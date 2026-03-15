@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/funding'
 
@@ -8,15 +8,23 @@ const fundingDetail = ref() // 추천 상품 리스트
 const route = useRoute()
 const Quantity = ref(1)
 
-// [추가] UI 상태 관리를 위한 변수들
-const activeTab = ref('story')      // 현재 선택된 탭 (story, maker, process, shipping)
-const selectedReward = ref(null)    // 사용자가 클릭한 리워드 객체
+
+const activeTab = ref('story')
+const selectedReward = ref(null)
+
+const mainImage = ref('')
 
 const getDesc = async () => {
   const idx = route.params.idx
   const res = await api.FundingDesc(idx)
   // console.log(res.result)
   fundingDesc.value = res.result
+
+  mainImage.value = res.result.img
+
+  // 데이터 불러온 후 바로 카운트다운 시작
+  calculateTimeLeft()
+  timerInterval = setInterval(calculateTimeLeft, 1000)
 
 }
 
@@ -36,21 +44,58 @@ const minusQuantity = () => {
     Quantity.value = Quantity.value - 1
 }
 
-// [추가] 총 금액 계산 로직 (선택된 리워드 가격 * 수량)
+// 총 금액 계산 로직 (선택된 리워드 가격 * 수량)
 const totalPrice = computed(() => {
   if (!selectedReward.value) return 0
   return selectedReward.value.price * Quantity.value
 })
 
-// [추가] 리워드 선택 함수
+// 리워드 선택 함수
 const selectReward = (item) => {
   selectedReward.value = item
 }
 
+// 메인 이미지 변경
+const changeMainImage = (newSrc) => {
+  mainImage.value = newSrc
+}
+
+// 실시간 시간 
+// ... 기존 변수들 ...
+const timeLeft = ref('')
+let timerInterval = null
+
+// 카운트다운 계산 함수
+const calculateTimeLeft = () => {
+  if (!fundingDesc.value || !fundingDesc.value.endDays) return
+
+  const targetDate = new Date(fundingDesc.value.endDays).getTime()
+  const now = new Date().getTime()
+  const distance = targetDate - now
+
+  if (distance < 0) {
+    timeLeft.value = "펀딩 종료"
+    if (timerInterval) clearInterval(timerInterval)
+    return
+  }
+
+  // 일, 시, 분, 초 계산
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
+  const seconds = Math.floor((distance % (1000 * 60)) / 1000)
+
+  // 00 형식으로 맞추기 (예: 04일 05:06:07)
+  timeLeft.value = `${String(days).padStart(2, '0')}일 ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
 
 onMounted(() => {
   getDesc()
   getDetail()
+})
+
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
 })
 </script>
 
@@ -64,7 +109,7 @@ onMounted(() => {
 
     <!-- Cover -->
     <section class="relative overflow-hidden rounded-md border border-gray-100 shadow-sm h-[260px] md:h-[340px] mb-10">
-      <img src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1800&q=80"
+      <img :src="fundingDesc.img"
         alt="Funding Cover" class="w-full h-full object-cover" />
       <div class="absolute inset-0 banner-gradient"></div>
 
@@ -93,17 +138,20 @@ onMounted(() => {
         <section class="mb-10">
           <div class="border border-gray-100 bg-gray-50 rounded-md overflow-hidden">
             <div class="aspect-square w-full">
-              <img id="main-img"
-                src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1400&q=80"
-                class="w-full h-full object-cover" alt="Main" />
+              <img id="main-img" :src="mainImage" class="w-full h-full object-cover" alt="Main" />
             </div>
           </div>
 
           <div class="mt-4 flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
+            <button
+              class="thumb shrink-0 border border-[#A39382] rounded-md overflow-hidden w-24 aspect-square bg-white"
+              @click="changeMainImage(fundingDesc.img)">
+              <img :src="fundingDesc.img" class="w-full h-full object-cover" alt="Thumb 1" />
+            </button>
             <div v-for="img in fundingDesc.fundingImgList">
               <button
                 class="thumb shrink-0 border border-[#A39382] rounded-md overflow-hidden w-24 aspect-square bg-white"
-                :data-src="img.imgDetail">
+                @click="changeMainImage(img.imgDetail)" :data-src="img.imgDetail">
                 <img :src="img.imgDetail" class="w-full h-full object-cover" alt="Thumb 1" />
               </button>
             </div>
@@ -214,11 +262,13 @@ onMounted(() => {
               Making Process
             </h2>
 
-            <div class="space-y-4">
-              <div v-for="Process in fundingDesc.fundingProcessList" class="flex items-start space-x-4">
+            <div class="space-y-8">
+              <div v-for="(Process, index) in fundingDesc.fundingProcessList" :key="Process.idx"
+                class="flex items-start space-x-4 mb-8">
+
                 <div
-                  class="w-8 h-8 rounded-full accent-bg text-white flex items-center justify-center text-sm font-bold process-number">
-                  {{ Process.idx }}
+                  class="w-8 h-8 rounded-full accent-bg text-white flex items-center justify-center text-sm font-bold process-number shrink-0">
+                  {{ index + 1 }}
                 </div>
                 <div>
                   <p class="text-sm font-medium text-gray-900">{{ Process.title }}</p>
@@ -277,14 +327,14 @@ onMounted(() => {
               <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2 font-medium">
                 Funding Progress
               </p>
-              <p class="text-3xl font-bold accent-text" id="percent-text">{{ fundingDesc.percent }}</p>
+              <p class="text-3xl font-bold accent-text" id="percent-text">{{ fundingDesc.percent }} %</p>
             </div>
             <div class="text-right">
               <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2 font-medium">
                 Time Left
               </p>
               <p class="text-lg font-mono text-gray-800 tracking-wider" id="countdown">
-                04일 12:34:56
+                {{ timeLeft || '계산 중...' }}
               </p>
             </div>
           </div>
@@ -355,7 +405,7 @@ onMounted(() => {
           <div class="space-y-4 max-h-[420px] overflow-auto pr-1 no-scrollbar">
             <button class="reward reward-card w-full text-left rounded-md p-5"
               v-for="item in fundingDesc.fundingRewardsList" :key="item.idx" @click="selectReward(item)">
-            
+
               <div class="flex items-start justify-between">
                 <div>
                   <p class="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
@@ -556,20 +606,30 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #9B8A7E; /* --accent-color 값 직접 적용 */
+  background-color: #9B8A7E;
+  /* --accent-color 값 직접 적용 */
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   font-weight: 700;
-  font-family: 'Cinzel', serif; /* 숫자 폰트 스타일 */
-  margin-top: -2px; /* 제목 텍스트와 높이를 맞추기 위한 미세 조정 */
+  font-family: 'Cinzel', serif;
+  /* 숫자 폰트 스타일 */
+  margin-top: -2px;
+  /* 제목 텍스트와 높이를 맞추기 위한 미세 조정 */
 }
 
 /* 타블렛/모바일 대응을 위한 미세 조정 */
 @media (max-width: 768px) {
-  .process-item { gap: 1rem; }
-  .process-number { width: 32px; height: 32px; font-size: 14px; }
+  .process-item {
+    gap: 1rem;
+  }
+
+  .process-number {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
 }
 </style>
