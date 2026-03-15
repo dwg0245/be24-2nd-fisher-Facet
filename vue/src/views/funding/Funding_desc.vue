@@ -123,9 +123,9 @@ onUnmounted(() => {
     </nav>
 
     <!-- Cover -->
-    <section class="relative overflow-hidden rounded-md border border-gray-100 shadow-sm h-[260px] md:h-[340px] mb-10">
-      <img :src="fundingDesc.img"
-        alt="Funding Cover" class="w-full h-full object-cover" />
+    <section class="relative overflow-hidden rounded-md border border-[#2A2A2A] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#252525] to-[#111111] shadow-sm h-[260px] md:h-[340px] mb-10 flex items-end">
+      <!-- <img :src="fundingDesc.img"
+        alt="Funding Cover" class="w-full h-full object-cover" /> -->
       <div class="absolute inset-0 banner-gradient"></div>
 
       <div class="absolute left-6 md:left-10 bottom-8 md:bottom-10 text-white max-w-2xl">
@@ -388,9 +388,7 @@ onUnmounted(() => {
             <button class="flex-1 py-3 text-[11px] font-bold tracking-widest uppercase ghost-btn rounded-sm">
               ❤️ 위시리스트
             </button>
-            <button class="flex-1 py-3 text-[11px] font-bold tracking-widest uppercase ghost-btn rounded-sm">
-              🔗 공유
-            </button>
+            
           </div>
 
           <div class="pt-2">
