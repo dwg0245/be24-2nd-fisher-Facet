@@ -30,20 +30,14 @@ const login = async () => {
 }
 
 // 환경 변수 로드
-const kakaoJavascriptKey = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY;
+
 const kakaoRedirectUri = import.meta.env.VITE_KAKAO_REDIRECT_URI;
 
 
 const loginWithKakao = () => {
-    Kakao.Auth.authorize({
-        redirectUri:kakaoRedirectUri,  // 앱에 등록된 카카오 로그인에서 사용할 Redirect URI 입력
-    });
-
-}
-
-onMounted(() => {
-    Kakao.init( kakaoJavascriptKey) // java 스크립트 키 넣기 
-})
+  // 백엔드의 OAuth2 엔드포인트로 브라우저 주소 자체를 이동시킵니다.
+  window.location.href = kakaoRedirectUri;
+};
 
 
 </script>
