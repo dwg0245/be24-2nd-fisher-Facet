@@ -1,32 +1,148 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/funding'
+import { useRewardStore } from '@/stores/rewardStore';
+const rewardStore = useRewardStore();
 
-const fundingDesc = ref()
-const fundingDetail = ref()
+const fundingDesc = ref()   // 해당 상품 리스트 
+const fundingDetail = ref() // 추천 상품 리스트
 const route = useRoute()
 const Quantity = ref(1)
 
-const getDetail = async () => {
+
+const activeTab = ref('story')
+const selectedReward = ref(null)  // 최종 리워드
+const currentSelected = ref([]); // 선택 리워드
+
+const mainImage = ref('') // 메인 이미지
+
+const getDesc = async () => {
   const idx = route.params.idx
-  const res = await api.getFundingDetail(idx)
-  console.log(res.result)
+  const res = await api.FundingDesc(idx)
+  // console.log(res.result)
   fundingDesc.value = res.result
-  fundingDetail.value = fundingDesc.value.rewards
+
+  mainImage.value = res.result.img
+
+  // 데이터 불러온 후 바로 카운트다운 시작
+  calculateTimeLeft()
+  timerInterval = setInterval(calculateTimeLeft, 1000)
+
 }
 
-const addQuantity = () => {
-  Quantity.value = Quantity.value + 1
+// 추천 리스트 출력
+const getDetail = async () => {
+  const res = await api.fundingDetail()
+  // console.log(res)
+  fundingDetail.value = res.result
+  console.log("fundingDesc", fundingDetail.value)
 }
 
-const minusQuantity = () => {
-  if(Quantity.value > 1)
-    Quantity.value = Quantity.value - 1
+// 현재 상품 계산 로직 (선택된 리워드 가격 * 수량)
+const productPrice = computed(() => {
+  if (!selectedReward.value) return 0
+  return selectedReward.value.price * Quantity.value
+})
+
+// [리워드 선택 로직] 사용자가 리워드 카드 중 하나를 클릭했을 때 실행
+const selectRewardItem = (item) => {
+  selectedReward.value = item; // 현재 선택된 아이템 정보 저장
+  Quantity.value = 1; // 수량을 1로 초기화
+};
+
+// [리워드 추가 로직 - 핵심] "Add On" 버튼 클릭 시 장바구니 리스트(currentSelected)에 추가
+const addToSelectedList = () => {
+  // 선택된 아이템이 없으면 함수 종료
+  if (!selectedReward.value) return;
+
+  // 최종 리스트(currentSelected)에 객체 추가
+  currentSelected.value.push({
+    ...selectedReward.value, // 선택된 리워드의 정보(제목, 가격 등) 복사
+    count: Quantity.value,   // 현재 설정된 수량 저장
+    uniqueId: Date.now()     // 삭제 시 식별하기 위한 고유 ID 부여
+  });
+
+  console.log(currentSelected.value)
+  // 추가 후 선택창 초기화
+  selectedReward.value = null;
+  Quantity.value = 1;
+};
+
+// 결제 바로가기 버튼 
+const selectAndGo = () => {
+  rewardStore.updateRewards(currentSelected.value,totalPrice.value);
+
+  // 2. 이미지 속 결제 페이지로 이동
+  router.push({ name: 'payment' });
+};
+
+// [리워드 삭제 로직] 장바구니에서 특정 리워드 제거
+const removeReward = (id) => {
+  currentSelected.value = currentSelected.value.filter(i => i.uniqueId !== id);
+};
+
+// 4. 계산된 속성 (Computed)
+// [총 금액 계산] 장바구니에 담긴 모든 리워드의 (단가 * 수량) 합계
+const totalPrice = computed(() => {
+  return currentSelected.value.reduce((acc, i) => acc + (i.price * i.count), 0);
+});
+
+// 메인 이미지 변경
+const changeMainImage = (newSrc) => {
+  mainImage.value = newSrc
 }
+
+// 실시간 시간 
+const timeLeft = ref('')
+let timerInterval = null
+
+// 카운트다운 계산 함수
+const calculateTimeLeft = () => {
+  if (!fundingDesc.value || !fundingDesc.value.endDays) return
+
+  const targetDate = new Date(fundingDesc.value.endDays).getTime()
+  const now = new Date().getTime()
+  const distance = targetDate - now
+
+  if (distance < 0) {
+    timeLeft.value = "펀딩 종료"
+    if (timerInterval) clearInterval(timerInterval)
+    return
+  }
+
+  // 일, 시, 분, 초 계산
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
+  const seconds = Math.floor((distance % (1000 * 60)) / 1000)
+
+  // 00 형식으로 맞추기 (예: 04일 05:06:07)
+  timeLeft.value = `${String(days).padStart(2, '0')}일 ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
+// 현재 퍼센트 계산 
+const calculatedPercent = computed(() => {
+  // 데이터가 없거나 목표 금액이 0인 경우 방어 로직
+  if (!fundingDesc.value || !fundingDesc.value.targetPrice || fundingDesc.value.targetPrice === 0) {
+    return 0;
+  }
+
+  // 현재 모인 금액 (DB 필드명이 'raised'라고 가정)
+  const raised = fundingDesc.value.targetPrice; // 실제 DB에서 넘어오는 '현재 모금액' 필드명으로 수정하세요.
+  // 목표 금액 (DB 필드명이 'goalPrice'라고 가정)
+  const goal = 10800000; // 이 부분도 DB 필드(fundingDesc.value.goalPrice)로 교체 가능합니다.
+
+  return Math.floor((raised / goal) * 100);
+});
 
 onMounted(() => {
+  getDesc()
   getDetail()
+})
+
+onUnmounted(() => {
+  if (timerInterval) clearInterval(timerInterval)
 })
 </script>
 
@@ -40,36 +156,28 @@ onMounted(() => {
 
     <!-- Cover -->
     <section
-      class="relative overflow-hidden rounded-md border border-gray-100 shadow-sm h-[260px] md:h-[340px] mb-10"
-    >
-      <img
-        src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1800&q=80"
-        alt="Funding Cover"
-        class="w-full h-full object-cover"
-      />
+      class="relative overflow-hidden rounded-md border border-[#2A2A2A] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#252525] to-[#111111] shadow-sm h-[260px] md:h-[340px] mb-10 flex items-end">
+      <!-- <img :src="fundingDesc.img"
+        alt="Funding Cover" class="w-full h-full object-cover" /> -->
       <div class="absolute inset-0 banner-gradient"></div>
 
-      <div class="absolute left-6 md:left-10 bottom-8 md:bottom-10 text-white max-w-2xl">
+      <div class="absolute left-6 md:left-10 bottom-8 md:bottom-10 text-white max-w-3xl">
         <div class="flex items-center space-x-2 mb-4">
           <span
-            class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] uppercase tracking-widest"
-            >Handmade</span
-          >
-          <span class="px-3 py-1 bg-[#A39382] rounded-full text-[10px] uppercase tracking-widest"
-            >Funding</span
-          >
+            class="inline-flex items-center rounded-full bg-zinc-800/50 px-4 py-1.5 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-700/50 uppercase tracking-widest">
+            Handmade</span>
           <span
-            class="px-3 py-1 bg-black/35 backdrop-blur-md rounded-full text-[10px] uppercase tracking-widest"
-            id="status-badge"
-            >Ongoing</span
-          >
+            class="inline-flex items-center rounded-full bg-zinc-200 px-4 py-1.5 text-xs font-medium text-zinc-800 ring-1 ring-inset ring-zinc-300 uppercase tracking-widest">{{
+              fundingDesc.category }}</span>
+          <span
+            class="inline-flex items-center rounded-full bg-zinc-500 px-4 py-1.5 text-xs font-medium text-white ring-1 ring-inset ring-zinc-400"
+            id="status-badge">{{ fundingDesc.brand }}</span>
         </div>
         <h1 class="text-3xl md:text-5xl font-light font-serif-luxury italic leading-tight">
           {{ fundingDesc.name }}
         </h1>
         <p class="text-sm md:text-[14px] font-light text-gray-200 leading-loose mt-4 opacity-95">
-          장인의 손끝에서 완성되는 수공예 주얼리. 펀딩으로 제작을 응원하고, 리워드로 당신만의 작품을
-          받아보세요.
+          작가의 섬세한 손길로 탄생하는 수공예 주얼리. 펀딩을 통해 팀의 창작 활동을 응원하고, 당신만을 위한 작품을 소장해 보세요.
         </p>
       </div>
     </section>
@@ -77,131 +185,69 @@ onMounted(() => {
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-10">
       <!-- Left: Story / Detail -->
       <div class="lg:col-span-8">
-        <!-- ✅ Gallery만 A안으로 교체 (정사각 메인 + 하단 필름스트립) -->
         <section class="mb-10">
           <div class="border border-gray-100 bg-gray-50 rounded-md overflow-hidden">
             <div class="aspect-square w-full">
-              <img
-                id="main-img"
-                src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1400&q=80"
-                class="w-full h-full object-cover"
-                alt="Main"
-              />
+              <img id="main-img" :src="mainImage" class="w-full h-full object-cover" alt="Main" />
             </div>
           </div>
 
           <div class="mt-4 flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
             <button
               class="thumb shrink-0 border border-[#A39382] rounded-md overflow-hidden w-24 aspect-square bg-white"
-              data-src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1400&q=80"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=240&q=80"
-                class="w-full h-full object-cover"
-                alt="Thumb 1"
-              />
+              @click="changeMainImage(fundingDesc.img)">
+              <img :src="fundingDesc.img" class="w-full h-full object-cover" alt="Thumb 1" />
             </button>
+            <div v-for="img in fundingDesc.fundingImgList">
+              <button
+                class="thumb shrink-0 border border-[#A39382] rounded-md overflow-hidden w-24 aspect-square bg-white"
+                @click="changeMainImage(img.imgDetail)" :data-src="img.imgDetail">
+                <img :src="img.imgDetail" class="w-full h-full object-cover" alt="Thumb 1" />
+              </button>
+            </div>
 
-            <button
-              class="thumb shrink-0 border border-gray-100 rounded-md overflow-hidden w-24 aspect-square bg-white"
-              data-src="https://images.unsplash.com/photo-1515562141207-7a18b5ce7142?auto=format&fit=crop&w=1400&q=80"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1515562141207-7a18b5ce7142?auto=format&fit=crop&w=240&q=80"
-                class="w-full h-full object-cover"
-                alt="Thumb 2"
-              />
-            </button>
-
-            <button
-              class="thumb shrink-0 border border-gray-100 rounded-md overflow-hidden w-24 aspect-square bg-white"
-              data-src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1400&q=80"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=240&q=80"
-                class="w-full h-full object-cover"
-                alt="Thumb 3"
-              />
-            </button>
-
-            <button
-              class="thumb shrink-0 border border-gray-100 rounded-md overflow-hidden w-24 aspect-square bg-white"
-              data-src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1400&q=80"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=240&q=80"
-                class="w-full h-full object-cover"
-                alt="Thumb 4"
-              />
-            </button>
           </div>
         </section>
 
-        <!-- Tabs -->
+        <!------------------------- Tabs ---------------------------->
         <div class="flex border-b border-gray-100 mb-6">
-          <button
-            class="tab px-6 py-3 text-[11px] font-bold tab-active uppercase tracking-[0.2em]"
-            data-tab="story"
-          >
-            Story
-          </button>
-          <button
-            class="tab px-6 py-3 text-[11px] font-medium text-gray-400 hover:text-gray-600 uppercase tracking-[0.2em] transition-colors"
-            data-tab="maker"
-          >
-            Maker
-          </button>
-          <button
-            class="tab px-6 py-3 text-[11px] font-medium text-gray-400 hover:text-gray-600 uppercase tracking-[0.2em] transition-colors"
-            data-tab="process"
-          >
-            Process
-          </button>
-          <button
-            class="tab px-6 py-3 text-[11px] font-medium text-gray-400 hover:text-gray-600 uppercase tracking-[0.2em] transition-colors"
-            data-tab="shipping"
-          >
-            Shipping
+          <button v-for="tab in ['story', 'maker', 'process', 'shipping']" :key="tab" @click="activeTab = tab" :class="['px-6 py-3 text-[11px] uppercase tracking-[0.2em] transition-colors',
+            activeTab === tab ? 'tab-active font-bold' : 'text-gray-400 font-medium']">
+            {{ tab }}
           </button>
         </div>
 
         <!-- Tab Contents -->
-        <div id="tab-story" class="tab-panel space-y-10">
+        <div v-show="activeTab === 'story'" id="tab-story" class="tab-panel space-y-10">
           <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="p-6 border border-gray-100 rounded-md bg-white">
               <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Key Point</p>
               <p class="text-sm text-gray-700 leading-relaxed font-light">
-                100% 수작업 세공으로 동일한 패턴이 없는
-                <span class="accent-text font-medium">원-오프(One-off)</span> 텍스처를 구현합니다.
+                {{ fundingDesc.fundingStory.keyPoint }}
               </p>
             </div>
             <div class="p-6 border border-gray-100 rounded-md bg-white">
               <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Material</p>
               <p class="text-sm text-gray-700 leading-relaxed font-light">
-                925 Silver / 14K Gold Plated 옵션, 원석은 프로젝트별로 엄선해 사용합니다.
+                {{ fundingDesc.fundingStory.material }}
               </p>
             </div>
             <div class="p-6 border border-gray-100 rounded-md bg-white">
               <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Handmade</p>
               <p class="text-sm text-gray-700 leading-relaxed font-light">
-                주문(펀딩) 종료 후 제작 시작. 제작 기간에 맞춰
-                <span class="accent-text font-medium">개별 검수</span> 후 발송합니다.
+                {{ fundingDesc.fundingStory.handMade }}
               </p>
             </div>
           </section>
+
+
 
           <section class="p-8 border border-gray-100 rounded-md bg-white space-y-5">
             <h2 class="text-xl font-light tracking-[0.25em] uppercase text-gray-900">
               Project Story
             </h2>
             <p class="text-sm text-gray-600 leading-relaxed font-light">
-              Celestial Rose는 “빛이 머무는 자리”를 모티브로 한 수공예 주얼리입니다. 장인이 원석의
-              결을 관찰한 뒤, 금속을 한 번에 찍어내지 않고 여러 단계로 다듬어 빛의 확산이 가장
-              아름답게 드러나는 각도를 찾습니다.
-            </p>
-            <p class="text-sm text-gray-600 leading-relaxed font-light">
-              대량 생산이 아닌, 펀딩을 통해 필요한 수량만 제작해 불필요한 재고를 줄이고 제작 과정의
-              품질에 더 많은 시간을 투자합니다.
+              {{ fundingDesc.fundingStory.projectStory }}
             </p>
           </section>
 
@@ -226,38 +272,33 @@ onMounted(() => {
           </section>
         </div>
 
-        <div id="tab-maker" class="tab-panel hidden space-y-10">
+        <div v-show="activeTab === 'maker'" id="tab-maker" class="tab-panel space-y-10">
           <section class="p-8 border border-gray-100 rounded-md bg-white">
             <div class="flex items-center justify-between mb-6">
               <div>
                 <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Maker</p>
-                <h2 class="text-2xl font-light text-gray-900">Atelier Park</h2>
+                <h2 class="text-2xl font-light text-gray-900">{{ fundingDesc.brand }}</h2>
               </div>
-              <button
-                class="px-5 py-2 text-[11px] font-bold tracking-widest uppercase ghost-btn rounded-sm"
-              >
-                Follow
-              </button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div class="p-5 bg-gray-50 rounded-md border border-gray-100">
                 <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Experience</p>
-                <p class="text-sm text-gray-700 font-light">금속 공예 7년 / 주얼리 제작 5년</p>
+                <p class="text-sm text-gray-700 font-light">{{ fundingDesc.fundingMaker.experience }}</p>
               </div>
               <div class="p-5 bg-gray-50 rounded-md border border-gray-100">
                 <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Style</p>
-                <p class="text-sm text-gray-700 font-light">미니멀 & 클래식, 자연 텍스처</p>
+                <p class="text-sm text-gray-700 font-light">{{ fundingDesc.fundingMaker.style }}</p>
               </div>
               <div class="p-5 bg-gray-50 rounded-md border border-gray-100">
                 <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Promise</p>
-                <p class="text-sm text-gray-700 font-light">전량 수작업 · 개별 검수 · 안전 포장</p>
+                <p class="text-sm text-gray-700 font-light">{{ fundingDesc.fundingMaker.promise }}</p>
               </div>
             </div>
 
             <div class="mt-8 text-sm text-gray-600 leading-relaxed font-light">
               <p>
-                “작품이 되는 순간은, 재료의 작은 결을 읽어내는 시간에서 시작됩니다.” Atelier Park는
+                “작품이 되는 순간은, 재료의 작은 결을 읽어내는 시간에서 시작됩니다.” {{ fundingDesc.brand }}는
                 수공예의 결을 살리는 제작 방식으로, 똑같은 제품이 반복되지 않도록 각 작품에 미세한
                 변주를 남깁니다.
               </p>
@@ -265,51 +306,24 @@ onMounted(() => {
           </section>
         </div>
 
-        <div id="tab-process" class="tab-panel hidden space-y-10">
+        <div v-show="activeTab === 'process'" id="tab-process" class="tab-panel  space-y-10">
           <section class="p-8 border border-gray-100 rounded-md bg-white space-y-6">
             <h2 class="text-xl font-light tracking-[0.25em] uppercase text-gray-900">
               Making Process
             </h2>
 
-            <div class="space-y-4">
-              <div class="flex items-start space-x-4">
-                <div
-                  class="w-8 h-8 rounded-full accent-bg text-white flex items-center justify-center text-sm font-bold"
-                >
-                  1
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900">디자인 확정 & 재료 선별</p>
-                  <p class="text-sm text-gray-600 font-light leading-relaxed mt-1">
-                    원석 결/색감을 기준으로 페어링하고, 금속 도금 옵션에 맞춰 공정을 확정합니다.
-                  </p>
-                </div>
-              </div>
+            <div class="space-y-8">
+              <div v-for="(Process, index) in fundingDesc.fundingProcessList" :key="Process.idx"
+                class="flex items-start space-x-4 mb-8">
 
-              <div class="flex items-start space-x-4">
                 <div
-                  class="w-8 h-8 rounded-full accent-bg text-white flex items-center justify-center text-sm font-bold"
-                >
-                  2
+                  class="w-8 h-8 rounded-full accent-bg text-white flex items-center justify-center text-sm font-bold process-number shrink-0">
+                  {{ index + 1 }}
                 </div>
                 <div>
-                  <p class="text-sm font-medium text-gray-900">세공(수작업)</p>
+                  <p class="text-sm font-medium text-gray-900">{{ Process.title }}</p>
                   <p class="text-sm text-gray-600 font-light leading-relaxed mt-1">
-                    절삭/연마/세팅을 여러 차례 반복해 광택과 내구성을 확보합니다.
-                  </p>
-                </div>
-              </div>
-
-              <div class="flex items-start space-x-4">
-                <div
-                  class="w-8 h-8 rounded-full accent-bg text-white flex items-center justify-center text-sm font-bold"
-                >
-                  3
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900">검수 & 패키징</p>
-                  <p class="text-sm text-gray-600 font-light leading-relaxed mt-1">
-                    마감 품질/도금 균일도/스크래치 여부를 점검하고 안전 포장 후 발송합니다.
+                    {{ Process.contents }}
                   </p>
                 </div>
               </div>
@@ -317,27 +331,25 @@ onMounted(() => {
           </section>
         </div>
 
-        <div id="tab-shipping" class="tab-panel hidden space-y-10">
+        <div v-show="activeTab === 'shipping'" id="tab-shipping" class="tab-panel  space-y-10">
           <section class="p-8 border border-gray-100 rounded-md bg-white space-y-6">
             <h2 class="text-xl font-light tracking-[0.25em] uppercase text-gray-900">
               Shipping & Policy
             </h2>
 
-            <div
-              class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600 font-light leading-relaxed"
-            >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600 font-light leading-relaxed">
               <div class="p-6 bg-gray-50 rounded-md border border-gray-100">
                 <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400 mb-2">
                   Estimated Delivery
                 </p>
-                <p>펀딩 종료 후 10~21일 내 순차 발송 (수량/공정에 따라 변동 가능)</p>
+                <p>펀딩 종료 후 10~21일 내 순차 발송 <br/> (수량/공정에 따라 변동 가능)</p>
               </div>
               <div class="p-6 bg-gray-50 rounded-md border border-gray-100">
                 <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400 mb-2">
                   Exchange / Refund
                 </p>
                 <p>
-                  수공예 맞춤 제작 특성상 단순 변심 환불 제한. 불량/파손은 수령 후 7일 이내 접수.
+                  수공예 맞춤 제작 특성상 단순 변심 환불 제한. <br/>불량/파손은 수령 후 7일 이내 접수.
                 </p>
               </div>
             </div>
@@ -357,34 +369,38 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Right: Funding summary + Rewards -->
-      <aside class="lg:col-span-4 lg:sticky lg:top-24 h-fit space-y-6">
+      <!-------------------- 사이드 정보  ------------------------>
+      <aside class="lg:col-span-4 lg:sticky lg:top-10 self-start space-y-6">
         <div class="border border-gray-100 rounded-md bg-white p-7 shadow-sm space-y-6">
           <div class="flex items-start justify-between">
             <div>
               <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2 font-medium">
                 Funding Progress
               </p>
-              <p class="text-3xl font-bold accent-text" id="percent-text">82%</p>
+              <p class="text-3xl font-bold accent-text" id="percent-text">{{ calculatedPercent }} %</p>
             </div>
             <div class="text-right">
               <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2 font-medium">
                 Time Left
               </p>
               <p class="text-lg font-mono text-gray-800 tracking-wider" id="countdown">
-                04일 12:34:56
+                {{ timeLeft || '계산 중...' }}
               </p>
             </div>
           </div>
 
           <div>
             <div class="w-full h-[4px] rounded-full overflow-hidden bg-gray-100">
-              <div id="progress-fill" class="h-full" style="width: 82%; background: #a39382"></div>
+              <div id="progress-fill" class="h-full" :style="{
+                width: Math.min(calculatedPercent, 100) + '%',
+                backgroundColor: '#a39382'
+              }"></div>
             </div>
             <div class="flex justify-between mt-3 text-sm">
               <div class="space-x-2">
                 <span class="text-gray-400 text-[11px]">모인 금액</span>
-                <span class="text-gray-900 font-medium" id="raised">₩ 8,900,000</span>
+                <span class="text-gray-900 font-medium" id="raised">
+                  ₩ {{ Number(fundingDesc.targetPrice).toLocaleString() }}</span>
               </div>
               <div class="space-x-2">
                 <span class="text-gray-400 text-[11px]">목표</span>
@@ -394,131 +410,139 @@ onMounted(() => {
             <div class="flex justify-between mt-2 text-sm">
               <div class="space-x-2">
                 <span class="text-gray-400 text-[11px]">서포터</span>
-                <span class="text-gray-900 font-medium" id="supporters">214명</span>
+                <span class="text-gray-900 font-medium" id="supporters">{{ fundingDesc.supporters }}명</span>
               </div>
               <div class="space-x-2">
                 <span class="text-gray-400 text-[11px]">종료</span>
-                <span class="text-gray-900 font-medium">01.12 18:00</span>
+                <span class="text-gray-900 font-medium">{{ fundingDesc.endDays }}</span>
               </div>
             </div>
           </div>
 
           <div class="flex space-x-2 pt-1">
-            <button
-              class="flex-1 py-3 text-[11px] font-bold tracking-widest uppercase ghost-btn rounded-sm"
-            >
+            <button class="flex-1 py-3 text-[11px] font-bold tracking-widest uppercase ghost-btn rounded-sm">
               ❤️ 위시리스트
             </button>
-            <button
-              class="flex-1 py-3 text-[11px] font-bold tracking-widest uppercase ghost-btn rounded-sm"
-            >
-              🔗 공유
+          </div>
+
+          <!----------------- 리워드 최종 선택 -------------------->
+          <div class="pt-2 border-t border-gray-50 mt-4">
+            <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-3 font-bold">Selected Rewards</p>
+            <div v-if="currentSelected.length === 0" class="text-sm text-gray-400 font-light italic">리워드를 추가해주세요.</div>
+            <div class="space-y-2">
+              <div v-for="reward in currentSelected" :key="reward.uniqueId"
+                class="flex items-center justify-between bg-gray-50 p-3 rounded-sm border border-gray-100 animate-fadeIn">
+                <div class="flex-1 pr-2">
+                  <p class="text-[12px] font-medium text-gray-800 line-clamp-1">{{ reward.title }}</p>
+                  <p class="text-[11px] text-gray-500">수량: {{ reward.count }} / ₩{{ (reward.price *
+                    reward.count).toLocaleString() }}</p>
+                </div>
+                <button @click="removeReward(reward.uniqueId)"
+                  class="text-gray-300 hover:text-red-400 transition-colors text-lg px-2">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-4 border-t border-gray-100 ">
+            <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">Total Amount</p>
+            <p class="text-xl font-bold accent-text">₩ {{ totalPrice.toLocaleString() }}</p>
+          </div>
+
+          <RouterLink :to="{ name: 'payment' }">
+            <button @click="selectAndGo" :disabled="currentSelected.length === 0"
+              class=" mt-4 w-full py-4 bg-[#9B8A7E] text-white font-bold text-xs tracking-[0.3em] uppercase rounded-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#8e7f74] transition-colors">
+              Support this Project
             </button>
-          </div>
+          </RouterLink>
 
-          <div class="pt-2">
-            <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Selected Reward</p>
-            <p class="text-sm text-gray-700 font-light" id="selected-reward-text">
-              리워드를 선택해주세요.
-            </p>
-          </div>
-
-          <button
-            id="support-btn"
-            class="w-full py-4 primary-btn font-bold text-xs tracking-[0.3em] uppercase rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled
-          >
-            Support this Project
-          </button>
 
           <p class="text-[11px] text-gray-400 leading-relaxed font-light">
-            결제는 프로젝트 종료 시점에 진행되며, 목표 미달 시 자동 취소됩니다(정책 설정 가능).
+            참여 즉시 결제가 진행되며, 목표 미달 시 전액 자동 환불됩니다.
           </p>
         </div>
 
+        <!-------------- 리워드 선택 -------------------->
+        <!-- 리워드 선택 영역 -->
         <div class="border border-gray-100 rounded-md bg-white p-7 shadow-sm">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-bold">리워드 선택</h3>
-            <span class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Rewards</span>
+            <span class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Options</span>
           </div>
 
-          <div class="space-y-4 max-h-[420px] overflow-auto pr-1 no-scrollbar">
-            <button
-              v-for="item in fundingDetail"
-              class="reward reward-card w-full text-left rounded-md p-5"
-              data-title="{{item.name}}"
-              data-price="{{item.price}}"
-              data-left="{{ item.stockQuantity }}"
-            >
-              <div class="flex items-start justify-between">
-                <div>
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
-                    Option {{ item.idx }}
-                  </p>
-                  <p class="text-sm font-bold text-gray-900">{{ item.name }}</p>
-                  <p class="text-[12px] text-gray-500 mt-2 font-light leading-relaxed">
-                    {{ item.desc }}
-                  </p>
+          <div class="space-y-3 max-h-[400px] overflow-auto pr-1 no-scrollbar">
+            <button v-for="item in fundingDesc.fundingRewardsList" :key="item.idx" @click="selectRewardItem(item)"
+              :class="[
+                'reward-card w-full text-left rounded-md p-4 border transition-all',
+                selectedReward?.idx === item.idx ? 'reward-selected bg-gray-50' : 'border-gray-100'
+              ]">
+              <div class="flex justify-between">
+                <div class="flex-1">
+                  <p class="text-[9px] uppercase tracking-[0.2em] text-gray-400 mb-1">Option {{ item.idx }}</p>
+                  <p class="text-sm font-bold text-gray-900 leading-tight">{{ item.title }}</p>
+                  <p class="text-[11px] text-gray-500 mt-1 line-clamp-1">{{ item.contents }}</p>
                 </div>
-                <div class="text-right ml-4">
-                  <p class="text-sm font-bold accent-text">
-                    ₩{{ Number(item.price).toLocaleString() }}
-                  </p>
-                  <p class="text-[11px] text-gray-400 mt-1">수량: {{ item.stockQuantity }}</p>
+                <div class="text-right ml-4 shrink-0">
+                  <p class="text-sm font-bold accent-text">₩{{ Number(item.price).toLocaleString() }}</p>
+                  <p class="text-[10px] text-gray-400 mt-1">남음: {{ item.stock }}</p>
                 </div>
               </div>
             </button>
           </div>
 
-          <!-- 수량 선택 부분-->
-          <div class="mt-6 border-t border-gray-100 pt-6 space-y-4">
+          <!-- 수량 선택 및 Add On 버튼 -->
+          <div v-if="selectedReward" class="mt-6 border-t border-gray-100 pt-6 space-y-4 animate-fadeIn">
             <div class="flex items-center justify-between">
               <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">Quantity</p>
               <div class="flex items-center space-x-2">
-                <button
-                  @click="minusQuantity()"
-                  id="qty-minus"
-                  class="w-9 h-9 ghost-btn rounded-sm flex items-center justify-center"
-                >
-                  −
-                </button>
-                <input
-                  id="qty"
-                  type="number"
-                  :min="1"
-                  :value="Quantity"
-                  class="w-14 text-center border border-gray-100 rounded-sm py-2 focus:outline-none focus:border-[#A39382]"
-                />
-                <button
-                  @click="addQuantity()"
-                  id="qty-plus"
-                  class="w-9 h-9 ghost-btn rounded-sm flex items-center justify-center"
-                >
-                  +
-                </button>
+                <button @click="Quantity > 1 ? Quantity-- : null"
+                  class="w-8 h-8 ghost-btn rounded-sm flex items-center justify-center">−</button>
+                <span class="w-10 text-center text-sm font-medium">{{ Quantity }}</span>
+                <button @click="Quantity++"
+                  class="w-8 h-8 ghost-btn rounded-sm flex items-center justify-center">+</button>
               </div>
             </div>
-
             <div class="flex items-center justify-between">
-              <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">Total</p>
-              <p class="text-lg font-bold accent-text" id="total">₩ 0</p>
+              <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">price</p>
+              <p class="text-lg font-bold accent-text" id="total">₩ {{ productPrice.toLocaleString() }}</p>
             </div>
 
-            <button
-              id="support-btn-2"
-              class="w-full py-4 primary-btn font-bold text-xs tracking-[0.3em] uppercase rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled
-            >
-              Support Now
-            </button>
 
-            <p class="text-[11px] text-gray-400 leading-relaxed font-light">
-              * “Add-on”은 단독 구매가 아닌 리워드와 함께 선택하는 옵션으로 설계했습니다(필요하면
-              로직 확장 가능).
-            </p>
+            <button @click="addToSelectedList"
+              class="w-full py-3 bg-[#A39382] text-white font-bold text-[10px] tracking-[0.3em] uppercase rounded-sm hover:bg-[#8e7f74] transition-colors">
+              Add On
+            </button>
+          </div>
+          <div v-else class="mt-6 text-center py-6 border-t border-dashed border-gray-100">
+            <p class="text-[11px] text-gray-400">리워드 아이템을 먼저 선택해주세요.</p>
           </div>
         </div>
       </aside>
+    </section>
+
+    <section class="mt-24">
+      <div class="flex justify-between items-end mb-8">
+        <h2 class="text-2xl font-bold">함께 보면 좋은 수공예 펀딩</h2>
+        <RouterLink :to="{ name: 'funding_list' }">
+          <button class="text-sm text-gray-400 hover:text-black transition">더보기</button>
+        </RouterLink>
+
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+        <div v-for="product in fundingDetail.fundingList" class="group cursor-pointer">
+          <div class="aspect-video overflow-hidden bg-gray-100 mb-4 relative rounded-md">
+            <img :src="product.img"
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Related">
+            <div class="absolute top-3 left-3">
+              <span
+                class="bg-[#A39382] text-white px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase">Handmade</span>
+            </div>
+          </div>
+          <h3 class="text-md font-bold leading-snug group-hover:text-[#A39382] transition-colors line-clamp-2">
+            {{ product.brand }} — {{ product.name }}</h3>
+          <p class="text-[12px] text-gray-400 mt-2">{{ product.category }} | {{ product.percent }}% 달성</p>
+        </div>
+      </div>
     </section>
   </main>
 </template>
@@ -528,7 +552,8 @@ onMounted(() => {
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&family=Noto+Sans+KR:wght@100;300;400;500;700&display=swap');
 
 :root {
-  --accent-color: #a39382;
+  /* ✅ CSS 변수도 동일한 색상으로 업데이트 */
+  --accent-color: #9B8A7E;
   --accent-hover: #8e7f70;
   --bg-light: #ffffff;
   --text-main: #1a1a1a;
@@ -546,6 +571,7 @@ body {
 .font-serif-luxury {
   font-family: 'Cormorant Garamond', serif;
 }
+
 .luxury-font {
   font-family: 'Cinzel', serif;
 }
@@ -580,14 +606,16 @@ body {
   color: var(--accent-color);
 }
 
+/* ✅ primary-btn 색상을 브라운 톤으로 고정 */
 .primary-btn {
-  background: var(--accent-color);
+  background: #9B8A7E;
   color: #fff;
   transition: all 0.2s ease;
 }
 
 .primary-btn:hover {
   opacity: 0.92;
+  background: #8e7f74;
 }
 
 .ghost-btn {
@@ -626,5 +654,37 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--accent-color);
   border-radius: 3px;
+}
+
+/* ✅ 시안처럼 번호를 스타일링하기 위한 CSS 추가 */
+.process-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #9B8A7E;
+  /* --accent-color 값 직접 적용 */
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Cinzel', serif;
+  /* 숫자 폰트 스타일 */
+  margin-top: -2px;
+  /* 제목 텍스트와 높이를 맞추기 위한 미세 조정 */
+}
+
+/* 타블렛/모바일 대응을 위한 미세 조정 */
+@media (max-width: 768px) {
+  .process-item {
+    gap: 1rem;
+  }
+
+  .process-number {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
 }
 </style>

@@ -164,9 +164,18 @@ const router = createRouter({
           name: 'ask',
           meta: {
             title: '문의 사항',
-            requiresAuth: false,
+            requiresAuth: true,
           },
           component: () => import('../views/users/Ask.vue'),
+        },
+        {
+          name: 'payment',
+          path: 'funding/payment',
+          meta: {
+            title: '결제',
+            requiresAuth: false,
+          },
+          component: () => import('../views/users/Payment.vue'),
         },
         {
           path: 'kakaoCallBack',

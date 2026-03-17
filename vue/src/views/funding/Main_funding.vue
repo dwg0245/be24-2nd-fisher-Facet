@@ -41,14 +41,9 @@ onMounted(() => {
 
 <template>
   <!-- Hero Section -->
-  <section class="relative h-[65vh] flex items-center overflow-hidden bg-black">
+  <section class="relative h-[65vh] flex items-end overflow-hidden border-b border-[#2A2A2A] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#252525] to-[#0F0F0F] shadow-sm">
     <div class="absolute inset-0 scale-105 group">
-      <img
-       referrerpolicy="no-referrer"
-        :src="funding_list.img"
-        class="w-full h-full object-cover opacity-60 transition-transform duration-[10s] ease-out scale-100 group-hover:scale-110"
-        alt="Main Hero"
-      />
+      
       <meta name="referrer" content="no-referrer" />
       <div class="absolute inset-0 premium-gradient"></div>
     </div>

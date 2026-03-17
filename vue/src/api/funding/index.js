@@ -12,15 +12,16 @@ const fundingPageList = async (page,currentFilter,currentCategories) =>{
   return res.data
 }
 
-const fundescList = async () => {
-  const res = await api.get('/funding/funding_list')
-  console.log('index', res)
+const fundingDetail = async () => {
+  const res = await api.get("funding/DetailList?page=0&size=4&endDay=1")
+  // console.log('index', res.data)
   return res.data
 }
 
-const getFundingDetail = async (idx) => {
-  const res = await api.get(`/json/funding_detail/${idx}`)
+const FundingDesc = async (idx) => {
+  const res = await api.get(`/funding/descList/${idx}`)
+  // console.log(res.data)
   return res.data
 }
 
-export default { mainfundList, fundescList, getFundingDetail, fundingPageList }
+export default { mainfundList, FundingDesc, fundingPageList ,fundingDetail}
