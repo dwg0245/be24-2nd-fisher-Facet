@@ -2,6 +2,8 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/funding'
+import { useRewardStore } from '@/stores/rewardStore';
+const rewardStore = useRewardStore();
 
 const fundingDesc = ref()   // 해당 상품 리스트 
 const fundingDetail = ref() // 추천 상품 리스트
@@ -10,9 +12,10 @@ const Quantity = ref(1)
 
 
 const activeTab = ref('story')
-const selectedReward = ref(null)
+const selectedReward = ref(null)  // 최종 리워드
+const currentSelected = ref([]); // 선택 리워드
 
-const mainImage = ref('')
+const mainImage = ref('') // 메인 이미지
 
 const getDesc = async () => {
   const idx = route.params.idx
@@ -28,6 +31,7 @@ const getDesc = async () => {
 
 }
 
+// 추천 리스트 출력
 const getDetail = async () => {
   const res = await api.fundingDetail()
   // console.log(res)
@@ -35,25 +39,54 @@ const getDetail = async () => {
   console.log("fundingDesc", fundingDetail.value)
 }
 
-const addQuantity = () => {
-  Quantity.value = Quantity.value + 1
-}
-
-const minusQuantity = () => {
-  if (Quantity.value > 1)
-    Quantity.value = Quantity.value - 1
-}
-
-// 총 금액 계산 로직 (선택된 리워드 가격 * 수량)
-const totalPrice = computed(() => {
+// 현재 상품 계산 로직 (선택된 리워드 가격 * 수량)
+const productPrice = computed(() => {
   if (!selectedReward.value) return 0
   return selectedReward.value.price * Quantity.value
 })
 
-// 리워드 선택 함수
-const selectReward = (item) => {
-  selectedReward.value = item
-}
+// [리워드 선택 로직] 사용자가 리워드 카드 중 하나를 클릭했을 때 실행
+const selectRewardItem = (item) => {
+  selectedReward.value = item; // 현재 선택된 아이템 정보 저장
+  Quantity.value = 1; // 수량을 1로 초기화
+};
+
+// [리워드 추가 로직 - 핵심] "Add On" 버튼 클릭 시 장바구니 리스트(currentSelected)에 추가
+const addToSelectedList = () => {
+  // 선택된 아이템이 없으면 함수 종료
+  if (!selectedReward.value) return;
+
+  // 최종 리스트(currentSelected)에 객체 추가
+  currentSelected.value.push({
+    ...selectedReward.value, // 선택된 리워드의 정보(제목, 가격 등) 복사
+    count: Quantity.value,   // 현재 설정된 수량 저장
+    uniqueId: Date.now()     // 삭제 시 식별하기 위한 고유 ID 부여
+  });
+
+  console.log(currentSelected.value)
+  // 추가 후 선택창 초기화
+  selectedReward.value = null;
+  Quantity.value = 1;
+};
+
+// 결제 바로가기 버튼 
+const selectAndGo = () => {
+  rewardStore.updateRewards(currentSelected.value,totalPrice.value);
+
+  // 2. 이미지 속 결제 페이지로 이동
+  router.push({ name: 'payment' });
+};
+
+// [리워드 삭제 로직] 장바구니에서 특정 리워드 제거
+const removeReward = (id) => {
+  currentSelected.value = currentSelected.value.filter(i => i.uniqueId !== id);
+};
+
+// 4. 계산된 속성 (Computed)
+// [총 금액 계산] 장바구니에 담긴 모든 리워드의 (단가 * 수량) 합계
+const totalPrice = computed(() => {
+  return currentSelected.value.reduce((acc, i) => acc + (i.price * i.count), 0);
+});
 
 // 메인 이미지 변경
 const changeMainImage = (newSrc) => {
@@ -61,7 +94,6 @@ const changeMainImage = (newSrc) => {
 }
 
 // 실시간 시간 
-// ... 기존 변수들 ...
 const timeLeft = ref('')
 let timerInterval = null
 
@@ -123,26 +155,29 @@ onUnmounted(() => {
     </nav>
 
     <!-- Cover -->
-    <section class="relative overflow-hidden rounded-md border border-[#2A2A2A] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#252525] to-[#111111] shadow-sm h-[260px] md:h-[340px] mb-10 flex items-end">
+    <section
+      class="relative overflow-hidden rounded-md border border-[#2A2A2A] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#252525] to-[#111111] shadow-sm h-[260px] md:h-[340px] mb-10 flex items-end">
       <!-- <img :src="fundingDesc.img"
         alt="Funding Cover" class="w-full h-full object-cover" /> -->
       <div class="absolute inset-0 banner-gradient"></div>
 
-      <div class="absolute left-6 md:left-10 bottom-8 md:bottom-10 text-white max-w-2xl">
+      <div class="absolute left-6 md:left-10 bottom-8 md:bottom-10 text-white max-w-3xl">
         <div class="flex items-center space-x-2 mb-4">
           <span
-            class="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] uppercase tracking-widest">Handmade</span>
-          <span class="px-3 py-1 bg-[#A39382] rounded-full text-[10px] uppercase tracking-widest">{{
-            fundingDesc.category }}</span>
-          <span class="px-3 py-1 bg-black/35 backdrop-blur-md rounded-full text-[10px] uppercase tracking-widest"
+            class="inline-flex items-center rounded-full bg-zinc-800/50 px-4 py-1.5 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-700/50 uppercase tracking-widest">
+            Handmade</span>
+          <span
+            class="inline-flex items-center rounded-full bg-zinc-200 px-4 py-1.5 text-xs font-medium text-zinc-800 ring-1 ring-inset ring-zinc-300 uppercase tracking-widest">{{
+              fundingDesc.category }}</span>
+          <span
+            class="inline-flex items-center rounded-full bg-zinc-500 px-4 py-1.5 text-xs font-medium text-white ring-1 ring-inset ring-zinc-400"
             id="status-badge">{{ fundingDesc.brand }}</span>
         </div>
         <h1 class="text-3xl md:text-5xl font-light font-serif-luxury italic leading-tight">
           {{ fundingDesc.name }}
         </h1>
         <p class="text-sm md:text-[14px] font-light text-gray-200 leading-loose mt-4 opacity-95">
-          장인의 손끝에서 완성되는 수공예 주얼리. 펀딩으로 제작을 응원하고, 리워드로 당신만의 작품을
-          받아보세요.
+          작가의 섬세한 손길로 탄생하는 수공예 주얼리. 펀딩을 통해 팀의 창작 활동을 응원하고, 당신만을 위한 작품을 소장해 보세요.
         </p>
       </div>
     </section>
@@ -174,7 +209,7 @@ onUnmounted(() => {
           </div>
         </section>
 
-        <!-- Tabs -->
+        <!------------------------- Tabs ---------------------------->
         <div class="flex border-b border-gray-100 mb-6">
           <button v-for="tab in ['story', 'maker', 'process', 'shipping']" :key="tab" @click="activeTab = tab" :class="['px-6 py-3 text-[11px] uppercase tracking-[0.2em] transition-colors',
             activeTab === tab ? 'tab-active font-bold' : 'text-gray-400 font-medium']">
@@ -307,14 +342,14 @@ onUnmounted(() => {
                 <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400 mb-2">
                   Estimated Delivery
                 </p>
-                <p>펀딩 종료 후 10~21일 내 순차 발송 (수량/공정에 따라 변동 가능)</p>
+                <p>펀딩 종료 후 10~21일 내 순차 발송 <br/> (수량/공정에 따라 변동 가능)</p>
               </div>
               <div class="p-6 bg-gray-50 rounded-md border border-gray-100">
                 <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400 mb-2">
                   Exchange / Refund
                 </p>
                 <p>
-                  수공예 맞춤 제작 특성상 단순 변심 환불 제한. 불량/파손은 수령 후 7일 이내 접수.
+                  수공예 맞춤 제작 특성상 단순 변심 환불 제한. <br/>불량/파손은 수령 후 7일 이내 접수.
                 </p>
               </div>
             </div>
@@ -334,8 +369,8 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Right: Funding summary + Rewards -->
-      <aside class="lg:col-span-4 lg:sticky lg:top-24 h-fit space-y-6">
+      <!-------------------- 사이드 정보  ------------------------>
+      <aside class="lg:col-span-4 lg:sticky lg:top-10 self-start space-y-6">
         <div class="border border-gray-100 rounded-md bg-white p-7 shadow-sm space-y-6">
           <div class="flex items-start justify-between">
             <div>
@@ -365,7 +400,7 @@ onUnmounted(() => {
               <div class="space-x-2">
                 <span class="text-gray-400 text-[11px]">모인 금액</span>
                 <span class="text-gray-900 font-medium" id="raised">
-                  ₩{{ Number(fundingDesc.targetPrice).toLocaleString() }}</span>
+                  ₩ {{ Number(fundingDesc.targetPrice).toLocaleString() }}</span>
               </div>
               <div class="space-x-2">
                 <span class="text-gray-400 text-[11px]">목표</span>
@@ -388,90 +423,97 @@ onUnmounted(() => {
             <button class="flex-1 py-3 text-[11px] font-bold tracking-widest uppercase ghost-btn rounded-sm">
               ❤️ 위시리스트
             </button>
-            
           </div>
 
-          <div class="pt-2">
-            <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-2">Selected Reward</p>
-            <p class="text-sm text-gray-700 font-light" id="selected-reward-text">
-              {{ selectedReward ? selectedReward.title : '리워드를 선택해주세요.' }}
-            </p>
+          <!----------------- 리워드 최종 선택 -------------------->
+          <div class="pt-2 border-t border-gray-50 mt-4">
+            <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em] mb-3 font-bold">Selected Rewards</p>
+            <div v-if="currentSelected.length === 0" class="text-sm text-gray-400 font-light italic">리워드를 추가해주세요.</div>
+            <div class="space-y-2">
+              <div v-for="reward in currentSelected" :key="reward.uniqueId"
+                class="flex items-center justify-between bg-gray-50 p-3 rounded-sm border border-gray-100 animate-fadeIn">
+                <div class="flex-1 pr-2">
+                  <p class="text-[12px] font-medium text-gray-800 line-clamp-1">{{ reward.title }}</p>
+                  <p class="text-[11px] text-gray-500">수량: {{ reward.count }} / ₩{{ (reward.price *
+                    reward.count).toLocaleString() }}</p>
+                </div>
+                <button @click="removeReward(reward.uniqueId)"
+                  class="text-gray-300 hover:text-red-400 transition-colors text-lg px-2">✕</button>
+              </div>
+            </div>
           </div>
 
-          <!-- ✅ 첫 번째 버튼 수정: 색상 강제 지정 -->
-          <button id="support-btn"
-            class="w-full py-4 bg-[#9B8A7E] text-white font-bold text-xs tracking-[0.3em] uppercase rounded-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#8e7f74] transition-colors">
-            Support this Project
-          </button>
+          <div class="flex items-center justify-between pt-4 border-t border-gray-100 ">
+            <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">Total Amount</p>
+            <p class="text-xl font-bold accent-text">₩ {{ totalPrice.toLocaleString() }}</p>
+          </div>
+
+          <RouterLink :to="{ name: 'payment' }">
+            <button @click="selectAndGo" :disabled="currentSelected.length === 0"
+              class=" mt-4 w-full py-4 bg-[#9B8A7E] text-white font-bold text-xs tracking-[0.3em] uppercase rounded-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#8e7f74] transition-colors">
+              Support this Project
+            </button>
+          </RouterLink>
+
 
           <p class="text-[11px] text-gray-400 leading-relaxed font-light">
-            결제는 프로젝트 종료 시점에 진행되며, 목표 미달 시 자동 취소됩니다(정책 설정 가능).
+            참여 즉시 결제가 진행되며, 목표 미달 시 전액 자동 환불됩니다.
           </p>
         </div>
 
+        <!-------------- 리워드 선택 -------------------->
+        <!-- 리워드 선택 영역 -->
         <div class="border border-gray-100 rounded-md bg-white p-7 shadow-sm">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-bold">리워드 선택</h3>
-            <span class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Rewards</span>
+            <span class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Options</span>
           </div>
 
-          <div class="space-y-4 max-h-[420px] overflow-auto pr-1 no-scrollbar">
-            <button class="reward reward-card w-full text-left rounded-md p-5"
-              v-for="item in fundingDesc.fundingRewardsList" :key="item.idx" @click="selectReward(item)">
-
-              <div class="flex items-start justify-between">
-                <div>
-                  <p class="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">
-                    Option {{ item.idx }}
-                  </p>
-                  <p class="text-sm font-bold text-gray-900">{{ item.title }}</p>
-                  <p class="text-[12px] text-gray-500 mt-2 font-light leading-relaxed">
-                    {{ item.contents }}
-                  </p>
+          <div class="space-y-3 max-h-[400px] overflow-auto pr-1 no-scrollbar">
+            <button v-for="item in fundingDesc.fundingRewardsList" :key="item.idx" @click="selectRewardItem(item)"
+              :class="[
+                'reward-card w-full text-left rounded-md p-4 border transition-all',
+                selectedReward?.idx === item.idx ? 'reward-selected bg-gray-50' : 'border-gray-100'
+              ]">
+              <div class="flex justify-between">
+                <div class="flex-1">
+                  <p class="text-[9px] uppercase tracking-[0.2em] text-gray-400 mb-1">Option {{ item.idx }}</p>
+                  <p class="text-sm font-bold text-gray-900 leading-tight">{{ item.title }}</p>
+                  <p class="text-[11px] text-gray-500 mt-1 line-clamp-1">{{ item.contents }}</p>
                 </div>
-                <div class="text-right ml-4">
-                  <p class="text-sm font-bold accent-text">
-                    ₩{{ Number(item.price).toLocaleString() }}
-                  </p>
-                  <p class="text-[11px] text-gray-400 mt-1">수량: {{ item.stock }}</p>
+                <div class="text-right ml-4 shrink-0">
+                  <p class="text-sm font-bold accent-text">₩{{ Number(item.price).toLocaleString() }}</p>
+                  <p class="text-[10px] text-gray-400 mt-1">남음: {{ item.stock }}</p>
                 </div>
               </div>
             </button>
           </div>
 
-          <!-- 수량 선택 부분-->
-          <div class="mt-6 border-t border-gray-100 pt-6 space-y-4">
+          <!-- 수량 선택 및 Add On 버튼 -->
+          <div v-if="selectedReward" class="mt-6 border-t border-gray-100 pt-6 space-y-4 animate-fadeIn">
             <div class="flex items-center justify-between">
               <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">Quantity</p>
               <div class="flex items-center space-x-2">
-                <button @click="minusQuantity()" id="qty-minus"
-                  class="w-9 h-9 ghost-btn rounded-sm flex items-center justify-center">
-                  −
-                </button>
-                <input id="qty" type="number" :min="1" :value="Quantity"
-                  class="w-14 text-center border border-gray-100 rounded-sm py-2 focus:outline-none focus:border-[#A39382]" />
-                <button @click="addQuantity()" id="qty-plus"
-                  class="w-9 h-9 ghost-btn rounded-sm flex items-center justify-center">
-                  +
-                </button>
+                <button @click="Quantity > 1 ? Quantity-- : null"
+                  class="w-8 h-8 ghost-btn rounded-sm flex items-center justify-center">−</button>
+                <span class="w-10 text-center text-sm font-medium">{{ Quantity }}</span>
+                <button @click="Quantity++"
+                  class="w-8 h-8 ghost-btn rounded-sm flex items-center justify-center">+</button>
               </div>
             </div>
-
             <div class="flex items-center justify-between">
-              <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">Total</p>
-              <p class="text-lg font-bold accent-text" id="total">₩ {{ totalPrice.toLocaleString() }}</p>
+              <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">price</p>
+              <p class="text-lg font-bold accent-text" id="total">₩ {{ productPrice.toLocaleString() }}</p>
             </div>
 
-            <!-- ✅ 두 번째 버튼 수정: 색상 강제 지정 -->
-            <button id="support-btn-2" :disabled="!selectedReward"
-              class="w-full py-4 bg-[#9B8A7E] text-white font-bold text-xs tracking-[0.3em] uppercase rounded-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#8e7f74] transition-colors">
-              Support Now
-            </button>
 
-            <p class="text-[11px] text-gray-400 leading-relaxed font-light">
-              * “Add-on”은 단독 구매가 아닌 리워드와 함께 선택하는 옵션으로 설계했습니다(필요하면
-              로직 확장 가능).
-            </p>
+            <button @click="addToSelectedList"
+              class="w-full py-3 bg-[#A39382] text-white font-bold text-[10px] tracking-[0.3em] uppercase rounded-sm hover:bg-[#8e7f74] transition-colors">
+              Add On
+            </button>
+          </div>
+          <div v-else class="mt-6 text-center py-6 border-t border-dashed border-gray-100">
+            <p class="text-[11px] text-gray-400">리워드 아이템을 먼저 선택해주세요.</p>
           </div>
         </div>
       </aside>
