@@ -1,39 +1,44 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted} from 'vue'
+import axios from "axios";
+import PortOne from "@portone/browser-sdk/v2"
 
 const currentPoint = ref(0)
 const totalPoints = ref(0)
 const inputPoints = ref(null)
 const PointFilter = ref('price10k')
+const isPaymentProcessing = ref(false) // 중복 결제 방지
 
-const currentPoints = () => {
+// 포인트 선택 시 금액 갱신
+const currentPoints = async () => {
   if (PointFilter.value === 'price10k') {
-    totalPoints.value += 10000
+    totalPoints.value = 10000
   }
 
   else if (PointFilter.value === 'price50k') {
-    totalPoints.value += 50000
+    totalPoints.value = 50000
   }
 
   else if (PointFilter.value === 'price100k') {
-    totalPoints.value += 100000
+    totalPoints.value = 100000
   }
   else if (PointFilter.value === 'price500k') {
-    totalPoints.value += 500000
+    totalPoints.value = 500000
   }
   else if (PointFilter.value === 'price1000k') {
-    totalPoints.value += 1000000
+    totalPoints.value = 1000000
   }
   
 }
 
+// 직접 포인트 입력
 const confirmInput = () => {
   
   if (!inputPoints.value ) return
 
   // 10,000 단위 체크 로직
-  if (inputPoints.value % 10000 !== 0) {
-    alert('포인트 충전은 10,000P 단위로만 가능합니다.')
+  if (inputPoints.value % 100 !== 0) {
+    alert('포인트 충전은 100P 단위로만 가능합니다.')
     inputPoints.value = 0 // 잘못된 입력 시 요약 금액 초기화
     return
   }
@@ -43,10 +48,113 @@ const confirmInput = () => {
   inputPoints.value = null // 엔터/탭 이후 입력창 비우기
 }
 
-const changePoint = () => {
-  currentPoint.value += totalPoints.value
-  totalPoints.value = 0
+// 결제 버튼 실행
+const changePoint = async () => {
+  if (totalPoints.value <= 0) {
+    alert("충전할 금액을 확인해주세요.");
+    return;
+  }
+
+  if (isPaymentProcessing.value) return;
+  isPaymentProcessing.value = true;
+
+  try {
+    // ==========================================================
+    // 1. 백엔드에 결제 준비(READY) 요청 
+    // ==========================================================
+    const createRes = await axios.post('http://localhost:8080/point/create', {
+      amount: totalPoints.value
+    }, {
+      withCredentials: true 
+    });
+
+    if (createRes.data.code !== 2001) {
+      alert(createRes.data.message || "결제 준비 중 문제가 발생했습니다.");
+      isPaymentProcessing.value = false;
+      return;
+    }
+    const pointIdx = createRes.data.result.pointIdx;
+    const uniquePaymentId = `imp_${crypto.randomUUID().replace(/-/g, '')}`; // 궁금 이게 뭔지 물어봐야ㅕ함
+
+    // ==========================================================
+    // 2. 포트원 실제 결제창 띄우기
+    // ==========================================================
+    const paymentResponse = await PortOne.requestPayment({
+      storeId: "store-6d92075a-fcc0-4920-afaf-b9df41abe7ec",
+      channelKey: "channel-key-5d4867e9-7b9c-4530-83f9-cf13dbe67c57", 
+      paymentId: uniquePaymentId, // 백엔드에서 받아온 주문번호 사용
+      orderName: `Facet 포인트 ${totalPoints.value.toLocaleString()}원 충전`,
+      totalAmount: totalPoints.value,
+      currency: 'KRW',
+      payMethod: "CARD" 
+    });
+
+    if (paymentResponse.code !== undefined) {
+      alert("결제가 취소되었거나 실패했습니다: " + paymentResponse.message);
+      return;
+    }
+
+  
+    // 3. 백엔드에 결제 검증 및 충전 요청
+    // ==========================================================
+    const verifyRes = await axios.post('http://localhost:8080/point/verify', {
+      paymentId: paymentResponse.paymentId, 
+      pointIdx: pointIdx 
+    }, {
+      withCredentials: true
+    });
+
+
+    // 성공 처리
+    if (verifyRes.data.code === 2002 || verifyRes.data.isSuccess) {
+      alert(`${totalPoints.value.toLocaleString()} 포인트가 성공적으로 충전되었습니다! 💎`);
+
+    
+    // 상태 초기화
+      currentPoint.value += totalPoints.value; 
+      totalPoints.value = 0; 
+      PointFilter.value = '';
+    } else {
+      alert("결제 검증 : " + verifyRes.data.message);
+    }
+
+  } catch (error) {
+    console.error("결제 진행 중 오류 발생:", error);
+
+    // 에러 상태 코드에 따른 분기 처리
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      alert("로그인이 필요한 서비스입니다. 로그인을 먼저 진행해주세요.");
+    } else {
+      alert(error.response?.data?.message || "결제 요청 중 서버 오류가 발생했습니다.");
+    }
+  } finally {
+    isPaymentProcessing.value = false;
+  }
 }
+
+// DB에서 현재 로그인한 유저의 포인트를 가져오는 함수
+const fetchCurrentPoint = async () => {
+  try {
+    // 💡 주의: 아래 주소는 회원님의 실제 '유저 정보 조회 API' 주소로 변경하셔야 합니다! (예: /user/info, /user/mypage 등)
+    const res = await axios.get('http://localhost:8080/point/current', {
+      withCredentials: true
+    });
+
+    // 백엔드 응답 성공 시, DB의 포인트 값을 화면 변수에 덮어씌움
+    if (res.data.isSuccess || res.data.code === 2000) {
+      currentPoint.value = res.data.result.currentPoint; // 백엔드 DTO 구조에 맞게 '.point' 부분은 수정해 주세요
+    }
+  } catch (error) {
+    console.error("유저 정보를 불러오는데 실패했습니다.", error);
+  }
+}
+
+onMounted(() => {
+  fetchCurrentPoint();
+});
+
+
+
 
 </script>
 
