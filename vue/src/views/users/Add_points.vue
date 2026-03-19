@@ -94,7 +94,7 @@ const changePoint = async () => {
       return;
     }
 
-    // ==========================================================
+  
     // 3. 백엔드에 결제 검증 및 충전 요청
     // ==========================================================
     const verifyRes = await axios.post('http://localhost:8080/point/verify', {
