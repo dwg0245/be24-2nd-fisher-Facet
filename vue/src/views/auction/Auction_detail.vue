@@ -1,9 +1,9 @@
 <script setup>
 import { onMounted, reactive, ref, onUnmounted, watch } from 'vue'
 import api from '@/api/auction'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/useAuthStore'
 
-const route = useRoute()
 const auctionDetail_list = reactive([])
 const auctionId = ref(null)
 const auctionDetail = ref(null)
@@ -13,16 +13,28 @@ const currentPrice = ref()
 let countdown = ref('')
 let isDone = ref(false)
 
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+
+onMounted(() => {
+  const isLogged = authStore.isLogin || localStorage.getItem('USERINFO')
+
+  if (!authStore.isLogin && !localStorage.getItem('USERINFO')) {
+    alert('로그인이 필요한 페이지입니다.')
+    router.push('/login')
+  } else {
+    getDetail()
+  }
+})
+
 // 경매 상품 DB에서 불러오기
 const getDetail = async () => {
-  console.log(route.params.idx)
   auctionId.value = Number(route.params.idx)
 
   const res = await api.detail(auctionId.value)
 
   if (res.code == 2000) {
-    console.log('detail', res.result)
-
     auctionDetail.value = res.result
     startPrice.value = auctionDetail.value.startPrice
     currentPrice.value = auctionDetail.value.currentPrice
@@ -123,10 +135,6 @@ const sendBid = async () => {
 // }
 
 const currentTab = ref('Detail')
-onMounted(() => {
-  getDetail()
-})
-
 watch(
   () => auctionDetail.value?.endAt,
   (newVal) => {
@@ -246,7 +254,7 @@ watch(
                 </div>
                 <button
                   @click="sendBid"
-                  class="w-full py-4 bid-button font-bold text-xs tracking-[0.3em] uppercase"
+                  class="w-full py-4 bid-button border border-[#A39382]/50 font-bold text-xs tracking-[0.3em] uppercase"
                   id="sendBid"
                 >
                   Place a Bid
@@ -355,7 +363,9 @@ watch(
               🔒 <span class="font-semibold">경매 종료</span> · 입찰이 마감된 상품입니다
             </p>
           </div>
-          <div class="text-sm font-medium accent-text">Final Price ₩ {{ auctionDetail.currentPrice.toLocaleString() }}</div>
+          <div class="text-sm font-medium accent-text">
+            Final Price ₩ {{ auctionDetail.currentPrice.toLocaleString() }}
+          </div>
         </div>
       </div>
       <main class="max-w-7xl mx-auto py-16 px-6 lg:px-10 pb-40">
@@ -405,7 +415,9 @@ watch(
 
               <div class="flex justify-between items-end">
                 <div>
-                  <p class="text-3xl font-bold accent-text pb-1">₩ {{ auctionDetail.currentPrice.toLocaleString() }}</p>
+                  <p class="text-3xl font-bold accent-text pb-1">
+                    ₩ {{ auctionDetail.currentPrice.toLocaleString() }}
+                  </p>
                   <p class="text-sm text-gray-500 mt-1">최종 낙찰가</p>
                 </div>
                 <div class="text-right text-sm text-gray-600">
@@ -478,7 +490,6 @@ body {
 .bid-button {
   transition: all 0.3s ease;
   background-color: transparent;
-  border: 1px solid var(--accent-color);
   color: var(--accent-color);
 }
 
