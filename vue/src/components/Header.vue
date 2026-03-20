@@ -1,7 +1,7 @@
 <script setup>
 import { RouterLink, useRoute, useRouter } from 'vue-router' //useRouter추가
 import { computed, ref, onMounted } from 'vue' //ref, onmounted 추가
-import useAuthStore from '@/stores/useAuthStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 const router = useRouter() //추가
 const inputQuery = ref('') //추가
@@ -19,10 +19,11 @@ const onSearchClick = () => {
     query: { q: inputQuery.value },
   })
 }
-
 onMounted(() => {
+  // 컴포넌트가 붙자마자 한 번 더 확실히 체크
   authStore.checkLogin()
-}) //추가
+  console.log('헤더 마운트 시점 로그인 상태:', authStore.isLogin)
+})
 </script>
 
 <template class="overflow-x-hidden">

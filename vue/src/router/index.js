@@ -2,7 +2,7 @@
 // 하나인 것처럼 만들어주는 것
 import { createRouter, createWebHistory } from 'vue-router'
 
-import useAuthStore from '@/stores/useAuthStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,7 +34,7 @@ const router = createRouter({
           name: 'Main_root',
           path: '',
           meta: {
-            title: '메인 경매',
+            title: '경매 메인페이지',
             requiresAuth: false,
           },
           component: () => import('../views/auction/Main_auction.vue'),
@@ -50,7 +50,7 @@ const router = createRouter({
         },
         {
           name: 'auction_list',
-          path: 'auction/auction_list',
+          path: 'auction/list',
           meta: {
             title: '경매 상품 리스트',
             requiresAuth: false,
@@ -62,13 +62,13 @@ const router = createRouter({
           path: 'auction/detail/:idx',
           meta: {
             title: '경매 상세',
-            requiresAuth: false,
+            requiresAuth: true,
           },
           component: () => import('../views/auction/Auction_detail.vue'),
         },
         {
           name: 'auction_end',
-          path: 'auction/auction_end',
+          path: 'auction/end',
           meta: {
             title: '경매 종료',
             requiresAuth: false,
@@ -77,12 +77,21 @@ const router = createRouter({
         },
         {
           name: 'auction_success',
-          path: 'auction/auction_success',
+          path: 'auction/success',
           meta: {
-            title: '경매 종료',
-            requiresAuth: false,
+            title: '경매 성공',
+            requiresAuth: true,
           },
           component: () => import('../views/auction/Auction_success.vue'),
+        },
+        {
+          name: 'auction_preview',
+          path: 'auction/preview/:idx',
+          meta: {
+            title: '경매 프리뷰',
+            requiresAuth: false,
+          },
+          component: () => import('../views/auction/Auction_preview.vue'),
         },
 
         {
@@ -204,26 +213,21 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to, from, next) => {
-  console.log('vue에서 링크를 이동할 때 매번 실행되는 함수')
-
-  // 페이지를 이동할때, 탭에 나오는 title를 다르게 뜰 수 있게 설정
-  document.title = to.meta.title
-
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  // meta에 있는 requiresAuth 참이면
-  if (to.meta.requiresAuth) {
-    // 꼭 로컬스토리지에서 확인하는 방법 말고도 백엔드에서 확인하는 방법도 있음
-    // 로그인한 사람인지 확인하고 안했으면
+  // 백엔드로 토큰 확인요청
+  const isAuthenticated = await authStore.validateToken()
+  const token = localStorage.getItem('USERINFO') // 민주님이 확인하신 토큰 이름
 
-    // 브라우저에 저장 되어 있는 localStorage 에 USERINFO가 없다면
-    if (!authStore.isLogin) {
-      // 로그인 페이지로 이동 /
-      // query는 주소에 ?를 사용해서 하는거 / {redirect : to.fullPath} 사용자를 로그인 페이지로 보내고 원래 가려고 했던 곳을 저장하여 로그인을 하면 갈 수 있도록 설정
-      next({ name: 'login', query: { redirect: to.fullPath } })
-    }
+  if (to.meta.requiresAuth && !token) {
+    alert('로그인이 필요한 서비스입니다.')
+    return next({
+      name: 'login',
+      query: { redirect: to.fullPath },
+    })
+  } else {
+    return next()
   }
-  next()
 })
 
 export default router
