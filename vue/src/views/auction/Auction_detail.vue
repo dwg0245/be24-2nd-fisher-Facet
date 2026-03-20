@@ -11,6 +11,7 @@ const startPrice = ref()
 const inputPrice = ref('')
 const currentPrice = ref()
 let countdown = ref('')
+let isBefore = ref(false)
 let isDone = ref(false)
 
 const route = useRoute()
@@ -42,6 +43,43 @@ const getDetail = async () => {
     alert('해당 상품에 대한 desc.json 파일을 불러오지 못함')
   }
 }
+// 경매 시작 전 프리뷰용 감시
+watch(
+  () => auctionDetail.value?.startAt,
+  (newVal) => {
+    if (newVal) {
+      showPreview(newVal)
+    }
+  },
+  { immediate: true },
+)
+
+// 프리뷰 띄우기 로직
+const showPreview = (targetDateStr) => {
+  const timer = setInterval(() => {
+    const target = new Date(targetDateStr).getTime() // 목표 시간 (ms)
+    const now = new Date().getTime()
+
+    // 시간이 종료되었을 때
+    if (target - now > 0) {
+      clearInterval(timer)
+      isBefore.value = true
+      return
+    }
+  }, 1000)
+}
+
+// 경매 시작 후 카운트 다운용 감시
+watch(
+  () => auctionDetail.value?.endAt,
+  (newVal) => {
+    if (newVal) {
+      // 데이터가 들어왔을 때만 카운트다운 시작!
+      startCountdown(newVal)
+    }
+  },
+  { immediate: true },
+)
 
 // 카운트다운 로직
 const startCountdown = (targetDateStr) => {
@@ -136,314 +174,385 @@ const sendBid = async () => {
 //     alert('현재 입찰가보다 높은 금액을 입력하세요.')
 //   }
 // }
-
-const currentTab = ref('Detail')
-watch(
-  () => auctionDetail.value?.endAt,
-  (newVal) => {
-    if (newVal) {
-      // 데이터가 들어왔을 때만 카운트다운 시작!
-      startCountdown(newVal)
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
   <div v-if="auctionDetail != null">
-    <!-- 경매가 진행 중일 때 화면 -->
-    <div :class="!isDone ? 'block' : 'hidden'">
+    <!-- 경매 시작 전 프리뷰 화면 -->
+    <div v-if="isBefore">
+      <div class="bg-[#A39382] text-white">
+        <div class="max-w-7xl mx-auto px-6 py-3 text-center">
+          <p class="text-sm font-light tracking-widest">
+            COMING SOON · 본 상품은 <span class="font-bold">{{ auctionDetail.startAt }}</span
+            >에 경매가 시작됩니다.
+          </p>
+        </div>
+      </div>
+
       <main class="max-w-7xl mx-auto py-12 px-6 lg:px-10 pb-60">
         <nav class="text-[10px] text-gray-400 mb-8 uppercase tracking-[0.2em]">
-          Home / Auction / {{ auctionDetail.category }} /
-          <span class="text-gray-600">{{ auctionDetail.name }}</span>
+          Home / Auction / Preview / <span class="text-gray-600">{{ auctionDetail.name }}</span>
         </nav>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <div class="space-y-6">
-            <div class="bg-gray-50 rounded-sm overflow-hidden border border-gray-100 group">
-              <img
-                :src="auctionDetail.image"
-                alt="Main Product"
-                class="w-full aspect-[4/4.5] object-cover group-hover:scale-[1.02] transition duration-700"
-              />
-            </div>
-            <div class="grid grid-cols-4 gap-4">
-              <div
-                class="border border-accent p-1 bg-white"
-                v-for="item in auctionDetail.img_detail"
-              >
-                <RouterLink to="/auction/Main_auction">
-                  <img
-                    :src="item"
-                    class="w-full aspect-square grayscale object-cover hover:grayscale-0 transition cursor-pointer"
-                  />
-                </RouterLink>
+          <div class="relative bg-gray-50 border border-gray-100 overflow-hidden group">
+            <img :src="auctionDetail.image" class="w-full aspect-[4/4.5] object-cover grayscale" />
+            <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+              <div class="text-center border border-white/30 p-10 backdrop-blur-sm">
+                <p class="luxury-font text-2xl tracking-[0.4em] text-white mb-2">UPCOMING</p>
+                <p class="text-white/80 text-xs tracking-widest font-light">Available Soon</p>
               </div>
             </div>
           </div>
 
-          <div class="flex flex-col">
-            <div class="mb-4">
-              <span
-                class="inline-block px-3 py-1 bg-[#F5F2F0] accent-text text-[10px] font-bold rounded-full mb-3 tracking-widest uppercase"
-                >Live Auction</span
-              >
-              <h1 class="text-4xl font-light tracking-tight mb-3 text-gray-900">
-                {{ auctionDetail.name }}
-              </h1>
-              <p class="text-gray-500 text-sm leading-relaxed font-light">
-                {{ auctionDetail.history }}
-              </p>
-            </div>
+          <div class="flex flex-col justify-center">
+            <span
+              class="inline-block w-fit px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-bold rounded-full mb-4 tracking-widest uppercase"
+            >
+              Preview Only
+            </span>
+            <h1 class="text-4xl font-light tracking-tight mb-6 text-gray-900">
+              {{ auctionDetail.name }}
+            </h1>
 
-            <div class="bg-white p-8 border border-gray-100 rounded-sm mb-8 space-y-6 shadow-sm">
-              <div class="flex justify-between items-end border-b border-gray-50 pb-6">
-                <div>
-                  <p class="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">
-                    현재 입찰가
-                  </p>
-                  <p id="currentPrice" class="text-3xl font-bold accent-text">
-                    ₩ {{ Number(currentPrice).toLocaleString() }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p class="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium">
-                    남은 시간
-                  </p>
-                  <p class="text-xl font-mono text-gray-800 tracking-wider" id="countdown">
-                    {{ countdown }}
-                  </p>
-                </div>
+            <div class="bg-white p-8 border border-gray-100 rounded-sm space-y-8 shadow-sm">
+              <div class="text-center pb-6 border-b border-gray-50">
+                <p class="text-gray-400 text-[10px] uppercase tracking-[0.3em] mb-4">
+                  Auction Starts In
+                </p>
+                <p class="text-4xl font-mono text-gray-800 tracking-tighter">{{ countdown }}</p>
               </div>
 
-              <div class="grid grid-cols-2 gap-y-4 gap-x-8 text-sm pt-2">
-                <div class="flex justify-between border-b border-gray-50 pb-2">
-                  <span class="text-gray-400 font-light">시작가</span>
-                  <span class="text-gray-700 font-medium"
+              <div class="space-y-4">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-400 font-light">경매 시작가</span>
+                  <span class="text-gray-800 font-medium"
                     >₩ {{ Number(startPrice).toLocaleString() }}</span
                   >
                 </div>
-                <div class="flex justify-between border-b border-gray-50 pb-2">
+                <div class="flex justify-between text-sm border-t border-gray-50 pt-4">
                   <span class="text-gray-400 font-light">입찰 단위</span>
-                  <span class="text-gray-700 font-medium">
-                    ₩ {{ Number(auctionDetail.bidIncrement).toLocaleString() }}</span
+                  <span class="text-gray-800 font-medium"
+                    >₩ {{ Number(auctionDetail.bidIncrement).toLocaleString() }}</span
                   >
-                </div>
-                <div class="flex justify-between border-b border-gray-50 pb-2">
-                  <span class="text-gray-400 font-light">총 입찰수</span>
-                  <span id="bidCount" class="text-gray-700 font-medium">
-                    {{ Number(auctionDetail.bidCount).toLocaleString() }}회</span
-                  >
-                </div>
-                <div class="flex justify-between border-b border-gray-50 pb-2">
-                  <span class="text-gray-400 font-light">종료 예정</span>
-                  <span class="text-gray-700 font-medium">{{ auctionDetail.endAt }}</span>
                 </div>
               </div>
 
-              <div class="pt-6">
-                <div class="flex items-center space-x-2 mb-4">
-                  <input
-                    v-model="inputPrice"
-                    type="number"
-                    placeholder="입찰 금액을 입력하세요"
-                    :step="auctionDetail.bidIncrement"
-                    id="message"
-                    class="flex-1 bg-white border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:border-[#A39382] transition-all placeholder:text-gray-300"
-                  />
-                  <span class="text-gray-400 text-xs font-bold tracking-widest">KRW</span>
-                </div>
-                <button
-                  @click="sendBid"
-                  class="w-full py-4 bid-button border border-[#A39382]/50 font-bold text-xs tracking-[0.3em] uppercase"
-                  id="sendBid"
-                >
-                  Place a Bid
-                </button>
-              </div>
-            </div>
-
-            <div class="flex border-b border-gray-100 mb-6">
               <button
-                v-for="tabBtn in ['Detail', 'History', 'Shipping']"
-                :key="tabBtn"
-                @click="currentTab = tabBtn"
-                class="px-6 py-3 text-[11px] font-bold tab-active uppercase tracking-[0.2em]"
+                disabled
+                class="w-full py-4 border border-gray-200 text-gray-300 font-bold text-xs tracking-[0.3em] uppercase cursor-not-allowed"
               >
-                {{ tabBtn }}
+                Wait for Launch
               </button>
             </div>
-
-            <div
-              v-if="currentTab === 'Detail'"
-              class="text-sm text-gray-500 leading-relaxed space-y-3 font-light"
-            >
-              <p class="flex items-center">
-                <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
-                • 원산지: {{ auctionDetail.origin }}
-              </p>
-              <p class="flex items-center">
-                <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
-                • 소재: {{ auctionDetail.material }}
-              </p>
-              <p class="flex items-center">
-                <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
-                • 사이즈: {{ auctionDetail.size }}
-              </p>
-            </div>
-            <div
-              v-if="currentTab === 'History'"
-              class="text-sm text-gray-500 leading-relaxed space-y-3 font-light"
-            >
-              <p class="flex items-center">
-                <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3 mt-1.5 flex-shrink-0"></span>
-                • 상품 설명: {{ auctionDetail.description }}
-              </p>
-            </div>
-            <div
-              v-if="currentTab === 'Shipping'"
-              class="text-sm text-gray-500 leading-relaxed font-light"
-            >
-              <p class="flex items-center">
-                <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
-                • 배송방법: {{ auctionDetail.shippingMethod }}
-              </p>
-              <p class="flex items-center">
-                <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
-                • 배송비: {{ Number(auctionDetail.shippingPrice).toLocaleString() }} KRW
-              </p>
-              <p class="flex items-center">
-                <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
-                • 예상 소요 시간: {{ auctionDetail.shippingDuration }}
-              </p>
-            </div>
           </div>
         </div>
-
-        <section class="mt-32">
-          <h2 class="text-xl font-light mb-12 tracking-[0.4em] text-center uppercase text-gray-800">
-            Related Artifacts
-          </h2>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div class="group cursor-pointer" v-for="item in auctionDetail_list.slice(0, 4)">
-              <RouterLink :to="`/auction/auction_desc/${item.idx}`">
-                <div
-                  class="aspect-square bg-gray-50 mb-4 overflow-hidden border border-gray-100 relative"
-                >
-                  <img
-                    :src="item.img"
-                    alt="Related"
-                    class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition duration-700"
-                  />
-                  <div
-                    class="absolute top-0 right-0 accent-bg px-3 py-1 text-[9px] text-white font-bold tracking-widest uppercase"
-                  >
-                    Upcoming
-                  </div>
-                </div>
-                <h3
-                  class="text-[10px] uppercase tracking-widest text-gray-400 mb-1 group-hover:text-black transition-colors"
-                >
-                  {{ item.name }}
-                </h3>
-                <p class="text-sm font-bold text-gray-800">₩ {{ item.price.toLocaleString() }}</p>
-              </RouterLink>
-            </div>
-          </div>
-        </section>
       </main>
     </div>
-    <!-- 경매가 종료되었을 때 화면 -->
-    <div :class="isDone ? 'block' : 'hidden'">
-      <div id="auctionStatus" class="bg-[#2B2B2B] text-white border-b border-black">
-        <div
-          class="max-w-7xl mx-auto px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
-        >
-          <div>
-            <p class="text-sm font-light">
-              🔒 <span class="font-semibold">경매 종료</span> · 입찰이 마감된 상품입니다
-            </p>
-          </div>
-          <div class="text-sm font-medium accent-text">
-            Final Price ₩ {{ auctionDetail.currentPrice.toLocaleString() }}
-          </div>
-        </div>
-      </div>
-      <main class="max-w-7xl mx-auto py-16 px-6 lg:px-10 pb-40">
-        <nav class="text-[10px] text-gray-400 mb-8 uppercase tracking-[0.2em]">
-          Home / Auction / Ring / <span class="text-gray-600">Midnight Sapphire Ring</span>
-        </nav>
+    <div v-else>
+      <!-- 경매가 진행 중일 때 화면 -->
+      <div :class="!isDone ? 'block' : 'hidden'">
+        <main class="max-w-7xl mx-auto py-12 px-6 lg:px-10 pb-60">
+          <nav class="text-[10px] text-gray-400 mb-8 uppercase tracking-[0.2em]">
+            Home / Auction / {{ auctionDetail.category }} /
+            <span class="text-gray-600">{{ auctionDetail.name }}</span>
+          </nav>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <!-- Product Image (종료 오버레이) -->
-          <div class="space-y-6">
-            <div class="relative bg-gray-50 border border-gray-100 overflow-hidden">
-              <img
-                :src="auctionDetail.image"
-                class="w-full aspect-[4/4.5] object-cover grayscale"
-                alt="product"
-              />
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <div class="space-y-6">
+              <div class="bg-gray-50 rounded-sm overflow-hidden border border-gray-100 group">
+                <img
+                  :src="auctionDetail.image"
+                  alt="Main Product"
+                  class="w-full aspect-[4/4.5] object-cover group-hover:scale-[1.02] transition duration-700"
+                />
+              </div>
+              <div class="grid grid-cols-4 gap-4">
+                <div
+                  class="border border-accent p-1 bg-white"
+                  v-for="item in auctionDetail.img_detail"
+                >
+                  <RouterLink to="/auction/Main_auction">
+                    <img
+                      :src="item"
+                      class="w-full aspect-square grayscale object-cover hover:grayscale-0 transition cursor-pointer"
+                    />
+                  </RouterLink>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col">
+              <div class="mb-4">
+                <span
+                  class="inline-block px-3 py-1 bg-[#F5F2F0] accent-text text-[10px] font-bold rounded-full mb-3 tracking-widest uppercase"
+                  >Live Auction</span
+                >
+                <h1 class="text-4xl font-light tracking-tight mb-3 text-gray-900">
+                  {{ auctionDetail.name }}
+                </h1>
+                <p class="text-gray-500 text-sm leading-relaxed font-light">
+                  {{ auctionDetail.history }}
+                </p>
+              </div>
+
+              <div class="bg-white p-8 border border-gray-100 rounded-sm mb-8 space-y-6 shadow-sm">
+                <div class="flex justify-between items-end border-b border-gray-50 pb-6">
+                  <div>
+                    <p
+                      class="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium"
+                    >
+                      현재 입찰가
+                    </p>
+                    <p id="currentPrice" class="text-3xl font-bold accent-text">
+                      ₩ {{ Number(currentPrice).toLocaleString() }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p
+                      class="text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-2 font-medium"
+                    >
+                      남은 시간
+                    </p>
+                    <p class="text-xl font-mono text-gray-800 tracking-wider" id="countdown">
+                      {{ countdown }}
+                    </p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-y-4 gap-x-8 text-sm pt-2">
+                  <div class="flex justify-between border-b border-gray-50 pb-2">
+                    <span class="text-gray-400 font-light">시작가</span>
+                    <span class="text-gray-700 font-medium"
+                      >₩ {{ Number(startPrice).toLocaleString() }}</span
+                    >
+                  </div>
+                  <div class="flex justify-between border-b border-gray-50 pb-2">
+                    <span class="text-gray-400 font-light">입찰 단위</span>
+                    <span class="text-gray-700 font-medium">
+                      ₩ {{ Number(auctionDetail.bidIncrement).toLocaleString() }}</span
+                    >
+                  </div>
+                  <div class="flex justify-between border-b border-gray-50 pb-2">
+                    <span class="text-gray-400 font-light">총 입찰수</span>
+                    <span id="bidCount" class="text-gray-700 font-medium">
+                      {{ Number(auctionDetail.bidCount).toLocaleString() }}회</span
+                    >
+                  </div>
+                  <div class="flex justify-between border-b border-gray-50 pb-2">
+                    <span class="text-gray-400 font-light">종료 예정</span>
+                    <span class="text-gray-700 font-medium">{{ auctionDetail.endAt }}</span>
+                  </div>
+                </div>
+
+                <div class="pt-6">
+                  <div class="flex items-center space-x-2 mb-4">
+                    <input
+                      v-model="inputPrice"
+                      type="number"
+                      placeholder="입찰 금액을 입력하세요"
+                      :step="auctionDetail.bidIncrement"
+                      id="message"
+                      class="flex-1 bg-white border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:border-[#A39382] transition-all placeholder:text-gray-300"
+                    />
+                    <span class="text-gray-400 text-xs font-bold tracking-widest">KRW</span>
+                  </div>
+                  <button
+                    @click="sendBid"
+                    class="w-full py-4 bid-button border border-[#A39382]/50 font-bold text-xs tracking-[0.3em] uppercase"
+                    id="sendBid"
+                  >
+                    Place a Bid
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex border-b border-gray-100 mb-6">
+                <button
+                  v-for="tabBtn in ['Detail', 'History', 'Shipping']"
+                  :key="tabBtn"
+                  @click="currentTab = tabBtn"
+                  class="px-6 py-3 text-[11px] font-bold tab-active uppercase tracking-[0.2em]"
+                >
+                  {{ tabBtn }}
+                </button>
+              </div>
 
               <div
-                class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-center"
+                v-if="currentTab === 'Detail'"
+                class="text-sm text-gray-500 leading-relaxed space-y-3 font-light"
               >
-                <p class="luxury-font text-3xl tracking-[0.35em] text-white mb-3">AUCTION CLOSED</p>
-                <p class="text-sm text-gray-300">This auction has ended</p>
+                <p class="flex items-center">
+                  <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
+                  • 원산지: {{ auctionDetail.origin }}
+                </p>
+                <p class="flex items-center">
+                  <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
+                  • 소재: {{ auctionDetail.material }}
+                </p>
+                <p class="flex items-center">
+                  <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
+                  • 사이즈: {{ auctionDetail.size }}
+                </p>
+              </div>
+              <div
+                v-if="currentTab === 'History'"
+                class="text-sm text-gray-500 leading-relaxed space-y-3 font-light"
+              >
+                <p class="flex items-center">
+                  <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3 mt-1.5 flex-shrink-0"></span>
+                  • 상품 설명: {{ auctionDetail.description }}
+                </p>
+              </div>
+              <div
+                v-if="currentTab === 'Shipping'"
+                class="text-sm text-gray-500 leading-relaxed font-light"
+              >
+                <p class="flex items-center">
+                  <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
+                  • 배송방법: {{ auctionDetail.shippingMethod }}
+                </p>
+                <p class="flex items-center">
+                  <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
+                  • 배송비: {{ Number(auctionDetail.shippingPrice).toLocaleString() }} KRW
+                </p>
+                <p class="flex items-center">
+                  <span class="w-1.5 h-1.5 accent-bg rounded-full mr-3"></span>
+                  • 예상 소요 시간: {{ auctionDetail.shippingDuration }}
+                </p>
               </div>
             </div>
           </div>
 
-          <!-- Right -->
-          <div class="flex flex-col">
-            <span
-              class="inline-block px-3 py-1 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-full mb-4 tracking-widest uppercase"
+          <section class="mt-32">
+            <h2
+              class="text-xl font-light mb-12 tracking-[0.4em] text-center uppercase text-gray-800"
             >
-              Auction Closed
-            </span>
-
-            <h1 class="text-4xl font-light mb-4">{{ auctionDetail.name }}</h1>
-
-            <p class="text-gray-500 text-sm leading-relaxed mb-10">
-              깊은 바다의 색을 닮은 사파이어와 정교한 에메랄드 컷이 조화를 이루는 단 하나의
-              작품입니다.
-            </p>
-
-            <!-- 종료 상태 카드 -->
-            <div class="border border-gray-200 bg-[#FAF9F8] p-8 space-y-4">
-              <p class="text-[10px] uppercase tracking-[0.25em] text-gray-400 font-bold">
-                Final Result
+              Related Artifacts
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+              <div class="group cursor-pointer" v-for="item in auctionDetail_list.slice(0, 4)">
+                <RouterLink :to="`/auction/auction_desc/${item.idx}`">
+                  <div
+                    class="aspect-square bg-gray-50 mb-4 overflow-hidden border border-gray-100 relative"
+                  >
+                    <img
+                      :src="item.img"
+                      alt="Related"
+                      class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-110 transition duration-700"
+                    />
+                    <div
+                      class="absolute top-0 right-0 accent-bg px-3 py-1 text-[9px] text-white font-bold tracking-widest uppercase"
+                    >
+                      Upcoming
+                    </div>
+                  </div>
+                  <h3
+                    class="text-[10px] uppercase tracking-widest text-gray-400 mb-1 group-hover:text-black transition-colors"
+                  >
+                    {{ item.name }}
+                  </h3>
+                  <p class="text-sm font-bold text-gray-800">₩ {{ item.price.toLocaleString() }}</p>
+                </RouterLink>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+      <!-- 경매가 종료되었을 때 화면 -->
+      <div :class="isDone ? 'block' : 'hidden'">
+        <div id="auctionStatus" class="bg-[#2B2B2B] text-white border-b border-black">
+          <div
+            class="max-w-7xl mx-auto px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+          >
+            <div>
+              <p class="text-sm font-light">
+                🔒 <span class="font-semibold">경매 종료</span> · 입찰이 마감된 상품입니다
               </p>
-
-              <div class="flex justify-between items-end">
-                <div>
-                  <p class="text-3xl font-bold accent-text pb-1">
-                    ₩ {{ auctionDetail.currentPrice.toLocaleString() }}
-                  </p>
-                  <p class="text-sm text-gray-500 mt-1">최종 낙찰가</p>
-                </div>
-                <div class="text-right text-sm text-gray-600">
-                  <p class="pb-1">총 입찰수 {{ auctionDetail.bidCount.toLocaleString() }}회</p>
-                  <p>종료일 {{ auctionDetail.endAt }}</p>
-                </div>
-              </div>
-
-              <div class="mt-6 border-t border-gray-200 pt-6 text-sm text-gray-600 leading-relaxed">
-                이 경매는 종료되었습니다.<br />
-                낙찰자는 마이페이지에서 주문 및 배송 상태를 확인할 수 있습니다.
-              </div>
-
-              <a
-                href="./orders.html"
-                class="inline-block mt-6 px-6 py-4 text-[11px] font-bold uppercase tracking-[0.3em] border border-gray-300 hover:border-[#A39382] hover:text-[#A39382] transition"
-              >
-                주문 / 배송 확인
-              </a>
+            </div>
+            <div class="text-sm font-medium accent-text">
+              Final Price ₩ {{ auctionDetail.currentPrice.toLocaleString() }}
             </div>
           </div>
         </div>
-      </main>
+        <main class="max-w-7xl mx-auto py-16 px-6 lg:px-10 pb-40">
+          <nav class="text-[10px] text-gray-400 mb-8 uppercase tracking-[0.2em]">
+            Home / Auction / Ring / <span class="text-gray-600">Midnight Sapphire Ring</span>
+          </nav>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <!-- Product Image (종료 오버레이) -->
+            <div class="space-y-6">
+              <div class="relative bg-gray-50 border border-gray-100 overflow-hidden">
+                <img
+                  :src="auctionDetail.image"
+                  class="w-full aspect-[4/4.5] object-cover grayscale"
+                  alt="product"
+                />
+
+                <div
+                  class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-center"
+                >
+                  <p class="luxury-font text-3xl tracking-[0.35em] text-white mb-3">
+                    AUCTION CLOSED
+                  </p>
+                  <p class="text-sm text-gray-300">This auction has ended</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right -->
+            <div class="flex flex-col">
+              <span
+                class="inline-block px-3 py-1 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-full mb-4 tracking-widest uppercase"
+              >
+                Auction Closed
+              </span>
+
+              <h1 class="text-4xl font-light mb-4">{{ auctionDetail.name }}</h1>
+
+              <p class="text-gray-500 text-sm leading-relaxed mb-10">
+                깊은 바다의 색을 닮은 사파이어와 정교한 에메랄드 컷이 조화를 이루는 단 하나의
+                작품입니다.
+              </p>
+
+              <!-- 종료 상태 카드 -->
+              <div class="border border-gray-200 bg-[#FAF9F8] p-8 space-y-4">
+                <p class="text-[10px] uppercase tracking-[0.25em] text-gray-400 font-bold">
+                  Final Result
+                </p>
+
+                <div class="flex justify-between items-end">
+                  <div>
+                    <p class="text-3xl font-bold accent-text pb-1">
+                      ₩ {{ auctionDetail.currentPrice.toLocaleString() }}
+                    </p>
+                    <p class="text-sm text-gray-500 mt-1">최종 낙찰가</p>
+                  </div>
+                  <div class="text-right text-sm text-gray-600">
+                    <p class="pb-1">총 입찰수 {{ auctionDetail.bidCount.toLocaleString() }}회</p>
+                    <p>종료일 {{ auctionDetail.endAt }}</p>
+                  </div>
+                </div>
+
+                <div
+                  class="mt-6 border-t border-gray-200 pt-6 text-sm text-gray-600 leading-relaxed"
+                >
+                  이 경매는 종료되었습니다.<br />
+                  낙찰자는 마이페이지에서 주문 및 배송 상태를 확인할 수 있습니다.
+                </div>
+
+                <a
+                  href="./orders.html"
+                  class="inline-block mt-6 px-6 py-4 text-[11px] font-bold uppercase tracking-[0.3em] border border-gray-300 hover:border-[#A39382] hover:text-[#A39382] transition"
+                >
+                  주문 / 배송 확인
+                </a>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   </div>
 
