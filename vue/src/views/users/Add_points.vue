@@ -8,6 +8,7 @@ const totalPoints = ref(0)
 const inputPoints = ref(null)
 const PointFilter = ref('price10k')
 const isPaymentProcessing = ref(false) // 중복 결제 방지
+const isAgreed = ref(false) // 필수 동의 체크 여부
 
 // 포인트 선택 시 금액 갱신
 const currentPoints = async () => {
@@ -37,8 +38,8 @@ const confirmInput = () => {
   if (!inputPoints.value ) return
 
   // 10,000 단위 체크 로직
-  if (inputPoints.value % 100 !== 0) {
-    alert('포인트 충전은 100P 단위로만 가능합니다.')
+  if (inputPoints.value % 10000 !== 0) {
+    alert('포인트 충전은 10000P 단위로만 가능합니다.')
     inputPoints.value = 0 // 잘못된 입력 시 요약 금액 초기화
     return
   }
@@ -50,6 +51,11 @@ const confirmInput = () => {
 
 // 결제 버튼 실행
 const changePoint = async () => {
+  if (!isAgreed.value) {
+    alert("결제 진행을 위해 필수 약관에 동의해 주세요.");
+    return;
+  }
+
   if (totalPoints.value <= 0) {
     alert("충전할 금액을 확인해주세요.");
     return;
@@ -251,39 +257,50 @@ onMounted(() => {
         </section>
 
         <!-- Step 02: Payment Method -->
-        <section class="premium-card p-8">
-          <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400 mb-8 border-b border-gray-50 pb-4">
-            02. 결제 수단
-          </h2>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <label class="cursor-pointer">
-              <input type="radio" name="payment" class="hidden peer" checked />
-              <div
-                class="p-4 border border-gray-100 rounded-xl text-center text-[11px] font-bold peer-checked:border-[#A39382] peer-checked:bg-[#fcfcfb] peer-checked:text-[#A39382] transition-all uppercase tracking-wider">
-                Credit Card
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="payment" class="hidden peer" />
-              <div
-                class="p-4 border border-gray-100 rounded-xl text-center text-[11px] font-bold peer-checked:border-[#A39382] peer-checked:bg-[#fcfcfb] peer-checked:text-[#A39382] transition-all uppercase tracking-wider">
-                Naver Pay
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="payment" class="hidden peer" />
-              <div
-                class="p-4 border border-gray-100 rounded-xl text-center text-[11px] font-bold peer-checked:border-[#A39382] peer-checked:bg-[#fcfcfb] peer-checked:text-[#A39382] transition-all uppercase tracking-wider">
-                Kakao Pay
-              </div>
-            </label>
-            <label class="cursor-pointer">
-              <input type="radio" name="payment" class="hidden peer" />
-              <div
-                class="p-4 border border-gray-100 rounded-xl text-center text-[11px] font-bold peer-checked:border-[#A39382] peer-checked:bg-[#fcfcfb] peer-checked:text-[#A39382] transition-all uppercase tracking-wider">
-                Bank Transfer
-              </div>
-            </label>
+        <section class="premium-card p-8 border-2 border-[#A39382]/10">
+                        <div class="flex justify-between items-end mb-8 border-b border-gray-50 pb-4">
+                            <h2 class="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                                02. 결제 보안 및 동의
+                            </h2>
+                            <div class="flex items-center gap-2 text-[10px] text-[#A39382] font-bold uppercase tracking-wider">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                Secure Gateway
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="p-5 rounded-2xl security-badge border border-gray-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="text-xl">💳</span>
+                                    <h4 class="text-[13px] font-bold">통합 결제 시스템</h4>
+                                </div>
+                                <p class="text-[11px] text-gray-500 leading-relaxed font-light">
+                                    포트원을 통해 신용카드, 카카오페이, 네이버페이 등 모든 결제 수단을 안전하게 이용하실 수 있습니다.
+                                </p>
+                            </div>
+                            <div class="p-5 rounded-2xl security-badge border border-gray-100">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="text-xl">🛡️</span>
+                                    <h4 class="text-[13px] font-bold">구매자 보호 적용</h4>
+                                </div>
+                                <p class="text-[11px] text-gray-500 leading-relaxed font-light">
+                                    거래 보안을 위해 결제 정보는 256bit SSL로 암호화되며, 서버에 카드정보를 직접 저장하지 않습니다.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <input type="checkbox" v-model="isAgreed" class="w-5 h-5 rounded border-gray-200 text-[#A39382] focus:ring-0">
+                                <span class="text-[13px] font-medium text-gray-600 group-hover:text-black transition-colors">
+                                    주문 내역 확인 및 결제 진행 동의 <span class="text-[#A39382]">(필수)</span>
+                                </span>
+                            </label>
+                            <div class="p-4 bg-gray-50/50 rounded-xl text-[10px] text-gray-400 leading-relaxed font-light">
+                                포인트는 충전 즉시 지급되며, 디지털 상품의 특성상 사용 후에는 환불이 불가능합니다. 결제 버튼 클릭 시 포트원 결제창으로 연결됩니다.
+            </div>
           </div>
         </section>
       </div>
@@ -315,7 +332,9 @@ onMounted(() => {
 
             <!-- Action Button -->
             <button @click="changePoint()"
-              class="w-full py-5 bg-[#1a1a1a] text-white font-bold text-xs tracking-[0.3em] uppercase rounded-xl hover:bg-[#333333] transition-all shadow-xl shadow-black/10">
+              :disabled="!isAgreed"
+              class="w-full py-5 text-white font-bold text-xs tracking-[0.3em] uppercase rounded-xl transition-all shadow-xl shadow-black/10"
+              :class="isAgreed ? 'bg-[#1a1a1a] hover:bg-[#333333]' : 'bg-gray-300 cursor-not-allowed'">
               Charge Point
             </button>
 
