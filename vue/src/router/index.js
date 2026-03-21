@@ -136,7 +136,7 @@ const router = createRouter({
           path: 'features/payment',
           meta: {
             title: '결제',
-            requiresAuth: true,
+            requiresAuth: false,
           },
           component: () => import('../views/features/Payment.vue'),
         },

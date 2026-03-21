@@ -24,4 +24,15 @@ const FundingDesc = async (idx) => {
   return res.data
 }
 
-export default { mainfundList, FundingDesc, fundingPageList ,fundingDetail}
+ const fundOrders = async(orderDto)=>{
+  const res = await api.post('/fundOrders/create', orderDto)
+  // console.log("res.data", res.data)
+  return res.data;
+ }
+
+ const verifyOrders = async (paymentId)=>{
+  const res = await api.post("/fundOrders/verify", paymentId)
+  return res.data
+ }
+
+export default { mainfundList, FundingDesc, fundingPageList ,fundingDetail, fundOrders, verifyOrders}
