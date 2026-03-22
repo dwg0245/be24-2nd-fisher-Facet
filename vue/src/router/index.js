@@ -191,7 +191,7 @@ const router = createRouter({
           path: 'funding/payment',
           meta: {
             title: '결제',
-            requiresAuth: false,
+            requiresAuth: true,
           },
           component: () => import('../views/users/Payment.vue'),
         },
