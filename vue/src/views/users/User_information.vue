@@ -156,7 +156,7 @@ const logout = async () => {
             :to="{ name: 'shipping' }"
             class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition"
           >
-            주문/배송
+            주문/참여내역
           </RouterLink>
 
           <RouterLink
