@@ -1,15 +1,16 @@
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue';
+import { ref, computed} from 'vue';
 import { useRewardStore } from '@/stores/rewardStore'; // 1. 스토어 불러오기
 import { useRouter } from 'vue-router'
 import api from '@/api/funding/index'
-import outapi from '@/api/user/index'
 import PortOne from "@portone/browser-sdk/v2"
+import { useAuthStore } from '@/stores/useAuthStore'
 
 
 // ------ 스토어 인스턴스 생성 --------
 const rewardStore = useRewardStore();
 const router = useRouter()
+const authStore = useAuthStore()
 
 // 선택된 리워드 데이터 가져오기 (반응형 유지를 위해 computed 권장)
 const selectedRewards = computed(() => rewardStore.selectedRewards);
@@ -153,7 +154,6 @@ const onPayment = async () => {
         })
 
         const verifyResponse = await api.verifyOrders(paymentId)
-        // console.log(verifyResponse.code)
 
 
         if (verifyResponse.code === 2002) { // 결제 성공
