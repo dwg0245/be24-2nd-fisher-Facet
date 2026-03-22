@@ -2,11 +2,65 @@
 import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 import api from '@/api/user/index.js'
 
 const authStore = useAuthStore()
-const userInfo = ref('')
+
 const router = useRouter()
+const userInfo = ref({
+  userName: '',
+  phoneNumber: '',
+  address: '',
+  birthDate: ''
+})
+
+const fetchUserInfo = async () => {
+  try {
+    const res = await axios.get('/api/user/getuserinfo', {
+      withCredentials: true
+    })
+    if (res.data.success || res.data.isSuccess || res.data.code === 2000) {
+      const data = res.data.result;
+
+      userInfo.value.phoneNumber = data.phoneNumber; // 전화번호
+      userInfo.value.address = data.address;         // 주소
+      userInfo.value.birthDate = data.birthDate;
+
+      console.log('DB에서 성공적으로 불러온 정보:', userInfo.value);
+    }
+    } catch (error) {
+    console.error('정보를 불러오지 못했습니다.', error)
+  }
+}
+onMounted(() => {
+  fetchUserInfo()
+})
+
+const saveUserInfo = async () => {
+  try {
+    const res = await axios.post('/api/user/updateuserinfo',{
+      phoneNumber: userInfo.value.phoneNumber,
+      address: userInfo.value.address,
+      birthDate: userInfo.value.birthDate
+    }, {
+      withCredentials: true
+    })
+
+    if (res.data.isSuccess) {
+      alert('개인정보가 성공적으로 저장되었습니다! 🎉')
+      userInfo.value = res.data.result 
+    }
+  } catch (error) {
+    alert('정보 저장에 실패했습니다.')
+    console.error(error)
+  }
+}
+
+onMounted(() => {
+  // 화면이 켜지자마자 백엔드에서 정보 가져오기!
+  fetchUserInfo()
+})
 
 onMounted(() => {
   // 1. 창고에서 데이터 꺼내기
@@ -145,6 +199,7 @@ const logout = async () => {
               </button>
               <button
                 id="saveBtn"
+                @click="saveUserInfo" 
                 class="btn-outline px-5 py-3 text-[11px] font-bold uppercase tracking-[0.25em]"
               >
                 저장
@@ -177,25 +232,25 @@ const logout = async () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
               <label class="field-label">Name</label>
-              <input class="field" type="text" v-model="userInfo.userName" placeholder="이름" />
+              <input class="field" type="text" v-model="userInfo.userName" placeholder="이름" readonly />
               <p class="hint">실명 기반 거래/배송을 위해 정확히 입력해 주세요.</p>
             </div>
 
             <div class="space-y-2">
               <label class="field-label">Phone</label>
-              <input class="field" type="text" value="010-1234-5678" placeholder="휴대폰 번호" />
+              <input class="field" type="text" v-model="userInfo.phoneNumber" placeholder="휴대폰 번호" />
               <p class="hint">배송 알림 및 보안 인증에 사용됩니다.</p>
             </div>
 
             <div class="space-y-2">
-              <label class="field-label">Email</label>
-              <input class="field" type="email" v-model="userInfo.email" placeholder="이메일" />
+              <label class="field-label">Address</label>
+              <input class="field" type="text" v-model="userInfo.address" placeholder="주소" />
               <p class="hint">영수증/공지/문의 답변 수신에 사용됩니다.</p>
             </div>
 
             <div class="space-y-2">
               <label class="field-label">Birthday</label>
-              <input class="field" type="date" value="2000-01-01" />
+              <input class="field" type="date" v-model="userInfo.birthDate" />
               <p class="hint">연령 인증이 필요한 서비스에 활용될 수 있어요.</p>
             </div>
           </div>
