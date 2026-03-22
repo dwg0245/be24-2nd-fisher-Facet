@@ -15,7 +15,8 @@ const authStore = useAuthStore()
 // 선택된 리워드 데이터 가져오기 (반응형 유지를 위해 computed 권장)
 const selectedRewards = computed(() => rewardStore.selectedRewards);
 const finalPrice = computed(() => rewardStore.totalPrice);
-
+const productIdx = computed(() => rewardStore.productIdx);
+  console.log("피니아 후",productIdx.value)
 
 // 만약 리워드 없이 주소로 바로 들어온 경우를 대비한 안전장치
 if (selectedRewards.value.length === 0) {
@@ -86,7 +87,7 @@ const handlePayment = async () => {
         alert('동의 사항에 체크해주세요.');
         return;
     }
-    alert(`${totalAmount.value.toLocaleString()}원 결제가 예약되었습니다!`);
+    // alert(`${totalAmount.value.toLocaleString()}원 결제가 예약되었습니다!`);
 
     await onPayment()
 };
@@ -116,6 +117,7 @@ const onPayment = async () => {
         }))
 
         const orderDto = ({
+            productIdx: productIdx.value,
             price: totalAmount.value,
             ordersItems: ordersItemsList
         });
@@ -132,12 +134,12 @@ const onPayment = async () => {
 
         // 2단계: 실제 포트원 결제창을 띄웁니다.
         const payment = await PortOne.requestPayment({
-            storeId: "store-c4620c46-17fa-4ebc-ac59-8d04c156cbf4",   // 내 상점 식별자
-            channelKey: "channel-key-dafcb684-1f58-465d-9fad-97b92723116d", // 결제 채널(카카오페이 등) 키
+            storeId: import.meta.env.VITE_PAYMENT_STOREID,   // 내 상점 식별자
+            channelKey: import.meta.env.VITE_PATMENT_CHANNELKEY, // 결제 채널(카카오페이 등) 키
             paymentId: `facet_${timestamp}_${shortUuid}`, // 이번 결제의 고유 번호, 결과: facet_20260319004654_a1b2c3d4
             orderName: orderName,      // 결제창에 뜰 이름
             totalAmount: totalAmount.value, // 결제할 금액
-            currency: 'KRW',           // 통화 (원화)
+            currency: 'CURRENCY_KRW',           // 통화 (원화)
             payMethod: "CARD",         // 결제 수단 (카드)
             customData: { ordersIdx, ordersItemsList } // 나중에 확인용으로 담아두는 추가 데이터
         }).then((res) => {

@@ -132,7 +132,7 @@ onMounted(() => {
                   {{ item.percent.toLocaleString() }}<span class="text-xs ml-0.5">%</span>
                 </span>
                 <span class="text-[13px] font-medium text-gray-900">
-                  ₩{{ item.price.toLocaleString() }}</span>
+                  모인 금액 {{ item.totalPrice.toLocaleString() }}</span>
               </div>
               <div class="w-full h-[2px] bg-gray-100 overflow-hidden rounded-full">
                 <div
