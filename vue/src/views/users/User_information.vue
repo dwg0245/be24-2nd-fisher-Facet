@@ -15,6 +15,38 @@ const userInfo = ref({
   birthDate: ''
 })
 
+const passwordData = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const changePassword = async () => {
+  //두 변수를 비교해서 오타가 있는지 확인
+  if (passwordData.value.newPassword !== passwordData.value.confirmPassword){
+    alert("새 비밀번호가 일치하지 않습니다")
+    return
+  }
+
+  try {
+    const res = await axios.post('/api/user/updatepassword', {
+      currentPassword: passwordData.value.currentPassword,
+      newPassword: passwordData.value.newPassword
+    }, { withCredentials: true })
+    
+    if (res.data.success || res.data.isSuccess) {
+      alert('비밀번호가 성공적으로 변경되었습니다. 보안을 위해 다시 로그인해 주세요.')
+
+      authStore.logout()
+      document.cookie = "ATOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+
+      router.push('/login')
+    }
+  } catch (error) {
+    alert(error.response?.data?.message || "비밀번호 변경에 실패했습니다. 현재 비밀번호를 확인해 주세요.")
+  }
+}
+
 const fetchUserInfo = async () => {
   try {
     const res = await axios.get('/api/user/getuserinfo', {
@@ -370,20 +402,18 @@ const logout = async () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
               <label class="field-label">Current Password</label>
-              <input class="field" type="password" value="password" placeholder="현재 비밀번호" />
+              <input class="field" type="password" v-model="passwordData.currentPassword" placeholder="현재 비밀번호" />
             </div>
             <div class="space-y-2">
               <label class="field-label">New Password</label>
-              <input class="field" type="password" placeholder="새 비밀번호" />
+              <input class="field" type="password" v-model="passwordData.newPassword" placeholder="새 비밀번호" />
             </div>
             <div class="space-y-2">
               <label class="field-label">Confirm</label>
-              <input class="field" type="password" placeholder="새 비밀번호 확인" />
+              <input class="field" type="password" v-model="passwordData.confirmPassword" placeholder="새 비밀번호 확인" />
             </div>
             <div class="flex items-end">
-              <button
-                class="btn-outline w-full py-4 font-bold text-[11px] tracking-[0.35em] uppercase"
-              >
+              <button @click="changePassword" class="btn-outline w-full py-4 font-bold text-[11px] tracking-[0.35em] uppercase">
                 비밀번호 변경
               </button>
             </div>
