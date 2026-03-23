@@ -211,15 +211,7 @@ onUnmounted(() => {
             <h2 class="text-xl font-light tracking-[0.25em] uppercase text-gray-900 mb-5">Project Story</h2>
             <p class="text-sm text-gray-600 leading-relaxed font-light">{{ fundingDesc.fundStory?.projectStory }}</p>
           </section>
-          <section class="p-8 border border-gray-100 rounded-md bg-white space-y-5">
-            <h2 class="text-xl font-light tracking-[0.25em] uppercase text-gray-900">
-              Project Story
-            </h2>
-            <p class="text-sm text-gray-600 leading-relaxed font-light">
-              {{ fundingDesc.fundStory.projectStory }}
-            </p>
-          </section>
-
+        
           <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="p-8 border border-gray-100 rounded-md bg-white">
               <h3 class="text-[11px] uppercase tracking-[0.2em] text-gray-400 mb-3">
@@ -283,9 +275,8 @@ onUnmounted(() => {
             <div class="space-y-8">
               <div v-for="(Process, index) in fundingDesc.fundProcessList" :key="Process.idx"
                 class="flex items-start space-x-4 mb-8">
-
                 <div
-                  class="w-8 h-8 rounded-full accent-bg text-white flex items-center justify-center text-sm font-bold process-number shrink-0">
+                  class="w-8 h-8 rounded-full bg-[#A39382] text-white flex items-center justify-center text-sm font-bold process-number shrink-0 mt-0.5">
                   {{ index + 1 }}
                 </div>
                 <div>
@@ -404,7 +395,7 @@ onUnmounted(() => {
 
               <div v-if="isRewardOpen"
                 class="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-sm shadow-2xl max-h-[300px] overflow-y-auto">
-                <div v-for="item in fundingDesc.fundRewardsList" :key="item.idx"
+                <div v-for="item in fundingDesc.fundingRewardsList" :key="item.idx"
                   @click="item.quantity > 0 ? selectReward(item) : null"
                   :class="['p-4 border-b border-gray-50 flex justify-between items-center transition-colors',
                     item.quantity <= 0 ? 'bg-gray-100 opacity-50 cursor-not-allowed' : 'hover:bg-stone-50 cursor-pointer']">
