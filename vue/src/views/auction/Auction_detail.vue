@@ -7,9 +7,11 @@ import { useAuthStore } from '@/stores/useAuthStore'
 const auctionDetail_list = reactive([])
 const auctionId = ref(null)
 const auctionDetail = ref(null)
+const currentTab = ref('Detail')
 const startPrice = ref()
 const inputPrice = ref('')
 const currentPrice = ref()
+const bidCount = ref()
 let countdown = ref('')
 let isBefore = ref(false)
 let isDone = ref(false)
@@ -18,7 +20,11 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
+const socket = ref(null)
+import { Client } from '@stomp/stompjs'
+
 onMounted(() => {
+  // 시작하자마자 로그인 여부 확인
   const isLogged = authStore.isLogin || localStorage.getItem('USERINFO')
 
   if (!authStore.isLogin && !localStorage.getItem('USERINFO')) {
@@ -26,6 +32,16 @@ onMounted(() => {
     router.push('/login')
   } else {
     getDetail()
+  }
+
+  // 시작하자마자 웹소켓 연결
+  connectWebSocket()
+})
+
+onUnmounted(() => {
+  if (socket.value && socket.value.active) {
+    socket.value.deactivate()
+    console.log('웹 소켓 연결 해제 (페이지 이탈)')
   }
 })
 
@@ -39,6 +55,7 @@ const getDetail = async () => {
     auctionDetail.value = res.result
     startPrice.value = auctionDetail.value.startPrice
     currentPrice.value = auctionDetail.value.currentPrice
+    bidCount.value = auctionDetail.value.bidCount
   } else {
     alert('해당 상품에 대한 desc.json 파일을 불러오지 못함')
   }
@@ -131,6 +148,16 @@ const sendBid = async () => {
         if (res.success) {
           // 서버에서 업데이트된 상품의 '현재가'를 받아와서 화면에 반영
           currentPrice.value = res.result.bidPrice
+          bidCount.value = bidCount.value + 1
+          const bidUpdateMessage = {
+            auctionId: auctionId.value,
+            newPrice: currentPrice.value,
+            bidCount: bidCount.value
+          }
+          socket.value.publish({
+            destination: '/ws/bid/' + auctionId.value, // Config의 applicationDestinationPrefixes + @MessageMapping
+            body: JSON.stringify(bidUpdateMessage),
+          })
           alert('입찰 성공! 현재 최고가는 ' + currentPrice.value.toLocaleString() + '원입니다.')
         }
       } catch (err) {
@@ -144,36 +171,25 @@ const sendBid = async () => {
   }
 }
 
-// // 웹소켓
-// let socket = null
-// const messages = reactive([])
-// const message = ref('')
-// onMounted(() => {
-//   const wsUri = 'ws://127.0.0.1:8080/ws/chat'
-//   socket = new WebSocket(wsUri)
-//
-//   socket.addEventListener('open', () => {
-//     console.log('CONNECTED')
-//   })
-//
-//   socket.addEventListener('message', (e) => {
-//     const data = JSON.parse(e.data)
-//     console.log('받은 데이터:', data.payload)
-//     currentPrice.value = data.payload
-//   })
-//   socket.addEventListener('close', (e) => {
-//     console.log('CLOSED')
-//   })
-// })
-//
-// const send = () => {
-//   if (currentPrice.value < Number(inputPrice.value)) {
-//     currentPrice.value = Number(inputPrice.value)
-//     socket.send(inputPrice.value)
-//   } else {
-//     alert('현재 입찰가보다 높은 금액을 입력하세요.')
-//   }
-// }
+// 웹소켓
+const connectWebSocket = () => {
+  const ws = new Client({
+    brokerURL: 'ws://localhost:5173/ws',
+  })
+  socket.value = ws
+
+  ws.onConnect = () => {
+    console.log('스톰프 연결 성공')
+
+    ws.subscribe(`/topic/${auctionId.value}`, (message) => {
+      const data = JSON.parse(message.body)
+
+      currentPrice.value = data.newPrice
+      bidCount.value = data.bidCount
+    })
+  }
+  ws.activate() // 연결 활성화
+}
 </script>
 
 <template>
@@ -336,7 +352,7 @@ const sendBid = async () => {
                   <div class="flex justify-between border-b border-gray-50 pb-2">
                     <span class="text-gray-400 font-light">총 입찰수</span>
                     <span id="bidCount" class="text-gray-700 font-medium">
-                      {{ Number(auctionDetail.bidCount).toLocaleString() }}회</span
+                      {{ Number(bidCount).toLocaleString() }}회</span
                     >
                   </div>
                   <div class="flex justify-between border-b border-gray-50 pb-2">

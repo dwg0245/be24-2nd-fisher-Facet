@@ -2,7 +2,7 @@
 import { reactive, onMounted } from 'vue'
 import api from '@/api/user'
 import { useRouter } from 'vue-router'
-import useAuthStore from '@/stores/useAuthStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 const router = useRouter()
 
@@ -24,12 +24,10 @@ const loginAndFetchDetail = async () => {
 }
 
 onMounted(() => {
-    loginAndFetchDetail(); // 페이지 로드 시 바로 유저 정보 확인
-});
+  loginAndFetchDetail() // 페이지 로드 시 바로 유저 정보 확인
+})
 </script>
 
-<template>
-
-</template>
+<template></template>
 
 <style scoped></style>
