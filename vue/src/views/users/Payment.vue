@@ -1,27 +1,31 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed} from 'vue';
 import { useRewardStore } from '@/stores/rewardStore'; // 1. 스토어 불러오기
 import { useRouter } from 'vue-router'
+import api from '@/api/funding/index'
+import PortOne from "@portone/browser-sdk/v2"
+import { useAuthStore } from '@/stores/useAuthStore'
 
-// 2. 스토어 인스턴스 생성
+
+// ------ 스토어 인스턴스 생성 --------
 const rewardStore = useRewardStore();
 const router = useRouter()
+const authStore = useAuthStore()
 
-// 3. 선택된 리워드 데이터 가져오기 (반응형 유지를 위해 computed 권장)
+// 선택된 리워드 데이터 가져오기 (반응형 유지를 위해 computed 권장)
 const selectedRewards = computed(() => rewardStore.selectedRewards);
 const finalPrice = computed(() => rewardStore.totalPrice);
-
-console.log("selectedReward", selectedRewards.value)
+const productIdx = computed(() => rewardStore.productIdx);
+  console.log("피니아 후",productIdx.value)
 
 // 만약 리워드 없이 주소로 바로 들어온 경우를 대비한 안전장치
 if (selectedRewards.value.length === 0) {
-    // 데이터가 없으면 리워드 선택 페이지로 되돌리기
     router.push({ name: 'funding_list' });
 }
 
-// 1. 상태 관리 (State)
-const extraSupport = ref(0);      // 추가 후원금
-const supportError = ref('');     // 후원금 에러 메시지
+// 상태 관리 (State)
+const extraSupport = ref(0);       // 추가 후원금
+const supportError = ref('');      // 후원금 에러 메시지
 const shippingMode = ref('recent');
 const isAgreed = ref(false);
 const shippingRequest = ref('');
@@ -29,6 +33,13 @@ const shippingRequest = ref('');
 // 결제 관련 상태
 const paymentType = ref('easy');
 const paymentMethod = ref('card');
+
+const isPaymentProcessing = ref(false) // 결제가 진행 중인지 확인 (중복 클릭 방지)
+
+const paymentStatus = ref({    // 결제 성공/실패 상태와 메시지를 저장
+    status: "",
+    message: ""
+});
 
 // 사용자 정보
 const shippingInfo = ref({
@@ -39,17 +50,18 @@ const shippingInfo = ref({
     detail: '4층'
 });
 
-// 2. 금액 계산 (Computed)
+// 금액 계산 (Computed)
 const rewardAmount = finalPrice.value;
 const shippingFee = 3000;
 const totalAmount = computed(() => {
     return rewardAmount + shippingFee + (Number(extraSupport.value) || 0);
 });
 
-// 3. 이벤트 핸들러 (Methods)
+// 이벤트 핸들러 (Methods)
 const setShippingMode = (mode) => (shippingMode.value = mode);
 const setPaymentType = (type) => (paymentType.value = type);
 const setPaymentMethod = (method) => (paymentMethod.value = method);
+
 
 // 후원금 유효성 검사 로직
 const validateSupportAmount = () => {
@@ -66,7 +78,7 @@ const validateSupportAmount = () => {
 };
 
 // 결제 금액 버튼 생성
-const handlePayment = () => {
+const handlePayment = async () => {
     if (supportError.value) {
         alert('후원금액을 다시 확인해주세요.');
         return;
@@ -75,15 +87,136 @@ const handlePayment = () => {
         alert('동의 사항에 체크해주세요.');
         return;
     }
-    alert(`${totalAmount.value.toLocaleString()}원 결제가 예약되었습니다!`);
+    // alert(`${totalAmount.value.toLocaleString()}원 결제가 예약되었습니다!`);
 
-    clearData()
+    await onPayment()
 };
 
+
+// 포트원 
+const onPayment = async () => {
+    if (selectedRewards.length === 0) return // 선택한 상품이 없으면 중단
+    if (isPaymentProcessing.value) return // 이미 결제 중이면 중단
+
+    isPaymentProcessing.value = true // 결제 프로세스 시작 알림
+    paymentStatus.value = { status: "", message: "" }
+
+    let ordersIdx = null // 서버에서 생성된 주문 번호를 담을 변수
+
+    try {
+
+        // 주문 이름 만들기 (ex: "반지 외 2건")
+        const firstItem = selectedRewards.value[0]
+        const orderName = selectedRewards.value.length === 1
+            ? firstItem.title
+            : `${firstItem.title} 외 ${selectedRewards.value.length - 1}건`
+
+        const ordersItemsList = selectedRewards.value.map(item => ({
+            productIdx: item.idx,
+            quantity: item.quantity
+        }))
+
+        const orderDto = ({
+            productIdx: productIdx.value,
+            price: totalAmount.value,
+            ordersItems: ordersItemsList
+        });
+
+        // 1단계: 우리 서버(Spring)에 "이 상품들 주문할 거야"라고 미리 알리고 주문 DB를 만듭니다.
+        const createResponse = await api.fundOrders(orderDto)
+        console.log(createResponse.idx)
+        // 서버가 생성해준 주문 PK(ordersIdx)를 받아옵니다.
+        ordersIdx = createResponse.idx
+
+        // 현재 시간을 가져와서 특수문자(-, :, .)를 다 제거하는 방식
+        const timestamp = new Date().toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
+        const shortUuid = crypto.randomUUID().split('-')[0];
+
+        // 2단계: 실제 포트원 결제창을 띄웁니다.
+        const payment = await PortOne.requestPayment({
+            storeId: import.meta.env.VITE_PAYMENT_STOREID,   // 내 상점 식별자
+            channelKey: import.meta.env.VITE_PATMENT_CHANNELKEY, // 결제 채널(카카오페이 등) 키
+            paymentId: `facet_${timestamp}_${shortUuid}`, // 이번 결제의 고유 번호, 결과: facet_20260319004654_a1b2c3d4
+            orderName: orderName,      // 결제창에 뜰 이름
+            totalAmount: totalAmount.value, // 결제할 금액
+            currency: 'CURRENCY_KRW',           // 통화 (원화)
+            payMethod: "CARD",         // 결제 수단 (카드)
+            customData: { ordersIdx, ordersItemsList } // 나중에 확인용으로 담아두는 추가 데이터
+        }).then((res) => {
+            return res; // 결제 시도 후 결과 반환
+        }).catch((error) => {
+            // 결제창 자체가 안 뜨거나 에러 났을 때 처리
+            paymentStatus.value = { status: "FAILED", message: '결제 시도가 실패하였습니다.' }
+        });
+
+        // 3단계: 결제 검증 (서버에 "실제로 돈이 들어왔는지 확인해줘"라고 요청)
+        // 결제가 끝나면 포트원에서 준 paymentId를 우리 서버로 보내서 2차 확인을 합니다.
+        const paymentId = ({
+            paymentId: payment.paymentId
+        })
+
+        const verifyResponse = await api.verifyOrders(paymentId)
+
+
+        if (verifyResponse.code === 2002) { // 결제 성공
+            router.push({ name: 'shipping' });
+            clearData();
+        } else { // 결제 실패 
+            if (verifyResponse.code === 4109) { // 본인의 주문만 결제 가능합니다
+                alert("인증 정보가 일치하지 않습니다. 보안을 위해 다시 로그인해주세요.")
+                try {
+                    // 쿠키 삭제를 위한 백엔드 통신
+                    const res = await api.logout()
+                } catch (error) {
+                    console.error("Logout communication failed:", error);
+                } finally {
+                    authStore.logout();
+                    router.push({ name: 'login' });
+                    clearData()
+                }
+            }
+            else if (verifyResponse.code === 4106) { // 유저를 찾을 수 없습니다.
+                alert("유저를 찾을 수 없습니다. 다시 로그인해주세요.")
+                router.push({ name: 'login' });
+                clearData();
+            }
+            else if (verifyResponse.code === 4203) { // 리워드를 찾을 수 없습니다. 
+                alert("해당 리워드 상품을 찾을 수 없습니다. 다시 시도해주세요.")
+                router.push({ name: 'funding_list' });
+                clearData();
+            }
+            else if (verifyResponse.code === 4108) { // "결제 취소 요청 중 오류가 발생했습니다."
+                alert("결제 취소 요청 중 오류가 발생했습니다. 다시 시도해주세요.")
+                router.push({ name: 'funding_list' });
+                clearData();
+            }
+            else if (verifyResponse.code === 4101) { // "결제 금액이 일치하지 않습니다."
+                alert("결제 금액이 일치하지 않습니다. 다시 시도해주세요.")
+                router.push({ name: 'funding_list' });
+                clearData();
+            }
+            else if (verifyResponse.code === 4100) { //  "결제 실패"
+                alert("결제 실패 하였습니다. 다시 시도해주세요.")
+                router.push({ name: 'funding_list' });
+                clearData();
+            }
+        }
+
+    } catch (error) {
+        // 통신 에러, 1단계 실패, 혹은 throw된 에러들이 모두 여기로 모입니다.
+        console.error("결제 프로세스 에러:", error);
+        paymentStatus.value = { status: "FAILED", message: error.message || "결제 시도가 실패하였습니다." };
+        alert(paymentStatus.value.message);
+    } finally {
+        // 성공하든 실패하든 로딩 상태는 해제해줘야 다음 클릭이 가능해요!
+        isPaymentProcessing.value = false;
+    }
+}
+
+// 피니아 데이터 삭제 
 const clearData = () => {
     rewardStore.clearRewards()
 }
-
 
 </script>
 
@@ -100,8 +233,9 @@ const clearData = () => {
                     <span class="icon">💡</span>
                     <div class="text">
                         <strong>펀딩 결제 안내</strong>
-                        <p>본 프로젝트는 안심 결제 시스템을 적용하여, 참여 즉시 결제가 진행됩니다. 
-                            <br/>목표 금액 미달 시 시스템을 통해 수수료를 포함한 결제 금액 전액이 자동 환불됨을 보장합니다.</p>
+                        <p>본 프로젝트는 안심 결제 시스템을 적용하여, 참여 즉시 결제가 진행됩니다.
+                            <br />목표 금액 미달 시 시스템을 통해 수수료를 포함한 결제 금액 전액이 자동 환불됨을 보장합니다.
+                        </p>
                     </div>
                 </div>
 
@@ -114,8 +248,8 @@ const clearData = () => {
                                 <p class="desc">{{ reward.contents }} </p>
                                 <div class="price-qty">
                                     <span class="price">
-                                        {{ Number(reward.price * reward.count).toLocaleString() }}원</span>
-                                    <span class="qty">수량 {{ reward.count }}개</span>
+                                        {{ Number(reward.price * reward.quantity).toLocaleString() }}원</span>
+                                    <span class="qty">수량 {{ reward.quantity }}개</span>
                                 </div>
                             </div>
                         </div>

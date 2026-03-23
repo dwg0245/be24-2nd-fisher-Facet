@@ -1,7 +1,77 @@
 <script setup>
-  import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const userName = ref('')
+
+// 참여 내역 리스트 (경매 + 펀딩)
+const historyList = ref([])
+
+// 상단 요약 데이터 (총 참여, 진행중, 종료됨)
+const summary = ref({
+  total: 0,
+  ongoing: 0,
+  ended: 0
+})
+
+// 필터 상태 관리 (all, auction, funding)
+const currentFilter = ref('all')
+
+// 필터 클릭 시 실행되는 함수
+const setFilter = (filterType) => {
+  currentFilter.value = filterType
+  currentPage.value = 1
+}
+
+// 화면에 그릴 필터링된 리스트 (computed로 자동 계산)
+const filteredList = computed(() => {
+  if (currentFilter.value === 'all') return historyList.value
+  return historyList.value.filter((item) => item.type === currentFilter.value.toUpperCase())
+})
+
+// ----------------------------------------------------
+// ✨ 페이징 로직 ✨
+// ----------------------------------------------------
+const currentPage = ref(1)
+const itemsPerPage = 5 // 한 페이지당 보여줄 개수
+
+// 총 페이지 수 계산
+const totalPages = computed(() => {
+  return Math.ceil(filteredList.value.length / itemsPerPage) || 1
+})
+
+// 화면에 실제로 그릴 5개짜리 리스트 (slice로 자르기)
+const paginatedList = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredList.value.slice(start, end)
+})
+
+// 페이지 이동 함수
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+    window.scrollTo({ top: 0, behavior: 'smooth' }) // 페이지 넘기면 화면 맨 위로 부드럽게 올리기
+  }
+}
+
+// 백엔드에서 통합 참여 내역 가져오기
+const fetchHistory = async () => {
+  try {
+    const res = await axios.get('/api/user/history', {
+      withCredentials: true
+    })
+
+    if (res.data.isSuccess || res.data.success) {
+      historyList.value = res.data.result.historyList
+      summary.value = res.data.result.summary
+    }
+  } catch (error) {
+    console.error('참여 내역을 불러오지 못했습니다.', error)
+  }
+}
 
 onMounted(() => {
   // 1. 창고에서 데이터 꺼내기
@@ -15,18 +85,18 @@ onMounted(() => {
   } else {
     userName.value = '로그인 필요'
   }
+  // 화면 켜지면 참여 내역 데이터 불러오기
+  fetchHistory()
 })
 </script>
 
 <template>
   <main class="max-w-7xl mx-auto py-16 px-6 lg:px-10">
-    <!-- Breadcrumb -->
     <nav class="text-[10px] text-gray-400 mb-10 uppercase tracking-[0.2em]">
-      Home / My / <span class="text-black font-medium">Orders</span>
+      Home / My / <span class="text-black font-medium">History</span>
     </nav>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-      <!-- Left: My Side -->
       <aside class="lg:col-span-4 border border-gray-100 bg-white shadow-sm p-8">
         <div class="flex items-center gap-4">
           <div class="w-14 h-14 rounded-full bg-gray-100 border border-gray-200"></div>
@@ -38,246 +108,123 @@ onMounted(() => {
         </div>
 
         <div class="mt-10 space-y-3 text-sm">
-          <RouterLink
-            :to="{ name: 'user_information' }"
-            class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition"
-          >
-            내정보
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'shipping' }"
-            class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition"
-          >
-            주문/배송
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'add_points' }"
-            class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition"
-          >
-            포인트
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'wish_list' }"
-            class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition"
-          >
-            위시리스트
-          </RouterLink>
-
-          <RouterLink
-            :to="{ name: 'ask' }"
-            class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition"
-          >
-            문의내역
-          </RouterLink>
+          <RouterLink :to="{ name: 'user_information' }" class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition">내정보</RouterLink>
+          <RouterLink :to="{ name: 'shipping' }" class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition font-bold text-black bg-gray-50">주문/참여내역</RouterLink>
+          <RouterLink :to="{ name: 'add_points' }" class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition">포인트</RouterLink>
+          <RouterLink :to="{ name: 'wish_list' }" class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition">위시리스트</RouterLink>
+          <RouterLink :to="{ name: 'ask' }" class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition">문의내역</RouterLink>
         </div>
 
-        <button
-          class="w-full mt-10 py-4 btn-outline font-bold text-[11px] tracking-[0.4em] uppercase"
-        >
+        <button class="w-full mt-10 py-4 btn-outline font-bold text-[11px] tracking-[0.4em] uppercase">
           Edit Profile
         </button>
 
-        <!-- Orders Summary -->
         <div class="mt-10 border-t border-gray-100 pt-8">
-          <p class="text-[10px] text-gray-400 uppercase tracking-[0.35em] mb-4">Orders Summary</p>
+          <p class="text-[10px] text-gray-400 uppercase tracking-[0.35em] mb-4">History Summary</p>
           <div class="grid grid-cols-3 gap-3">
             <div class="border border-gray-100 p-4 text-center">
-              <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Total</p>
-              <p class="text-lg font-bold accent-text mt-1">6</p>
+              <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">총 참여</p>
+              <p class="text-lg font-bold accent-text mt-1">{{ summary.total }}</p>
             </div>
             <div class="border border-gray-100 p-4 text-center">
-              <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Shipping</p>
-              <p class="text-lg font-bold text-black mt-1">2</p>
+              <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">진행중</p>
+              <p class="text-lg font-bold text-black mt-1">{{ summary.ongoing }}</p>
             </div>
             <div class="border border-gray-100 p-4 text-center">
-              <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">Done</p>
-              <p class="text-lg font-bold text-black mt-1">3</p>
+              <p class="text-[10px] text-gray-400 uppercase tracking-[0.2em]">종료됨</p>
+              <p class="text-lg font-bold text-black mt-1">{{ summary.ended }}</p>
             </div>
           </div>
         </div>
       </aside>
 
-      <!-- Right: Orders -->
       <section class="lg:col-span-8 space-y-10">
-        <!-- Title + Actions -->
         <div class="border border-gray-100 bg-white shadow-sm p-8">
           <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
             <div>
-              <h1 class="text-2xl font-medium text-black">주문/배송</h1>
+              <h1 class="text-2xl font-medium text-black">주문 / 참여내역</h1>
               <p class="text-sm text-gray-500 font-light mt-2">
-                경매 낙찰 및 펀딩 참여 내역의 상태와 배송 현황을 확인할 수 있어요.
+                내가 입찰에 참여한 경매 목록과 펀딩 내역을 확인할 수 있어요.
               </p>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <button class="btn-ghost px-4 py-3 text-[11px] font-bold uppercase tracking-[0.25em]">
-                <i class="fa-regular fa-file-lines mr-2"></i>주문내역 다운로드
-              </button>
-              <button
-                class="btn-outline px-4 py-3 text-[11px] font-bold uppercase tracking-[0.25em]"
-              >
-                <i class="fa-solid fa-location-dot mr-2"></i>배송지 관리
-              </button>
             </div>
           </div>
 
-          <!-- Filters Row -->
           <div class="mt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center gap-2 flex-wrap">
-              <button
-                class="chip active px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]"
-                data-filter="all"
-              >
-                All
-              </button>
-              <button
-                class="chip px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]"
-                data-filter="auction"
-              >
-                Auction
-              </button>
-              <button
-                class="chip px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]"
-                data-filter="funding"
-              >
-                Funding
-              </button>
-              <button
-                class="chip px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]"
-                data-filter="shipping"
-              >
-                배송중
-              </button>
-              <button
-                class="chip px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]"
-                data-filter="done"
-              >
-                배송완료
-              </button>
-              <button
-                class="chip px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]"
-                data-filter="issue"
-              >
-                이슈/문의
-              </button>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="relative">
-                <i
-                  class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[12px]"
-                ></i>
-                <input
-                  id="search"
-                  type="text"
-                  placeholder="상품명/판매자/주문번호 검색"
-                  class="w-[290px] bg-gray-50 border border-gray-100 rounded-full pl-9 pr-4 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#A39382] transition-all"
-                />
-              </div>
-
-              <select
-                id="sort"
-                class="bg-white border border-gray-100 rounded-full px-4 py-2 text-xs text-gray-700 focus:outline-none focus:border-[#A39382] transition-all"
-              >
-                <option value="recent">최근 주문순</option>
-                <option value="status">상태순</option>
-                <option value="priceDesc">금액 높은순</option>
-                <option value="priceAsc">금액 낮은순</option>
-              </select>
+              <button @click="setFilter('all')" :class="['chip px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]', currentFilter === 'all' ? 'active' : '']">All</button>
+              <button @click="setFilter('auction')" :class="['chip px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]', currentFilter === 'auction' ? 'active' : '']">Auction</button>
+              <button @click="setFilter('funding')" :class="['chip px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]', currentFilter === 'funding' ? 'active' : '']">Funding</button>
             </div>
           </div>
         </div>
 
-        <!-- List -->
-        <div class="space-y-4">
-          <!-- Order 1 (Auction / Shipping) -->
-          <div v-for="i in [1, 2, 3]">
-            <article
-              class="card p-6"
-              data-type="auction"
-              data-status="shipping"
-              data-name="미니멀 다이아 반지"
-              data-seller="OceanGem Official"
-              data-order="BD-2026-0102-4821"
-              data-price="268000"
-            >
-              <div class="flex items-start gap-5">
-                <RouterLink to="order-detail.html" class="thumb w-24 h-24 shrink-0">
-                  <img
-                    src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=240&q=80"
-                    class="w-full h-full object-cover"
-                    alt="order item"
-                  />
+        <div v-if="filteredList.length > 0" class="space-y-4">
+          <article v-for="item in paginatedList" :key="item.id" class="card p-6">
+            <div class="flex items-start gap-5">
+              <RouterLink :to="item.type === 'AUCTION' ? `/auction/${item.productIdx}` : `/funding/${item.productIdx}`" class="thumb w-24 h-24 shrink-0">
+                <img :src="item.image" class="w-full h-full object-cover" alt="product image" />
+              </RouterLink>
+
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2 flex-wrap">
+                  <span class="badge" :class="item.type === 'AUCTION' ? 'bg-gray-100' : 'bg-blue-50 text-blue-600'">
+                    {{ item.type === 'AUCTION' ? 'Auction' : 'Funding' }}
+                  </span>
+                  <span class="badge badge-accent">{{ item.status }}</span>
+                  <span class="badge">참여일: {{ item.date }}</span>
+                </div>
+
+                <RouterLink :to="item.type === 'AUCTION' ? `/auction/${item.productIdx}` : `/funding/${item.productIdx}`" class="block">
+                  <h3 class="text-lg font-medium text-black hover:accent-text transition">
+                    {{ item.name }}
+                  </h3>
                 </RouterLink>
 
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2 flex-wrap">
-                    <span class="badge">Auction</span>
-                    <span class="badge badge-accent">Shipping</span>
-                    <span class="badge">Order BD-2026-0102-4821</span>
-                  </div>
+                <p v-if="item.type === 'AUCTION'" class="text-sm text-gray-500 font-light mt-2">
+                  나의 입찰가 <span class="font-medium text-black">₩{{ item.myPrice.toLocaleString() }}</span> · 현재 최고가 ₩{{ item.currentPrice.toLocaleString() }}
+                </p>
+                <p v-else-if="item.type === 'FUNDING'" class="text-sm text-gray-500 font-light mt-2">
+                  나의 펀딩 금액 <span class="font-medium text-black">₩{{ item.myPrice.toLocaleString() }}</span>
+                </p>
 
-                  <RouterLink to="order-detail.html" class="block">
-                    <h3 class="text-lg font-medium text-black hover:accent-text transition">
-                      [14K] 미니멀 다이아 반지
-                    </h3>
-                  </RouterLink>
-
-                  <p class="text-sm text-gray-500 font-light mt-2">
-                    낙찰가 <span class="font-medium text-black">₩268,000</span> · 판매자 OceanGem
-                    Official
-                  </p>
-
-                  <div
-                    class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-                  >
-                    <div class="flex items-center gap-3 flex-wrap">
-                      <button
-                        class="btn-ghost px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em]"
-                      >
-                        <i class="fa-solid fa-truck mr-2"></i>배송 조회
-                      </button>
-                      <button
-                        class="btn-outline px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em]"
-                      >
-                        <i class="fa-regular fa-file-lines mr-2"></i>주문 상세
-                      </button>
-                      <button
-                        class="btn-ghost px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em]"
-                      >
-                        <i class="fa-regular fa-circle-question mr-2"></i>문의하기
-                      </button>
-                    </div>
-
-                    <div class="text-right">
-                      <p class="text-[10px] uppercase tracking-[0.2em] text-gray-400">Tracking</p>
-                      <p class="text-sm font-medium text-black">1234-5678</p>
-                    </div>
+                <div class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div class="flex items-center gap-3 flex-wrap">
+                    <RouterLink :to="item.type === 'AUCTION' ? `/auction/${item.productIdx}` : `/funding/${item.productIdx}`" class="btn-outline px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em]">
+                      <i :class="item.type === 'AUCTION' ? 'fa-solid fa-gavel' : 'fa-solid fa-seedling'" class="mr-2"></i>
+                      {{ item.type === 'AUCTION' ? '경매장 가기' : '펀딩 확인하기' }}
+                    </RouterLink>
                   </div>
                 </div>
               </div>
-            </article>
+            </div>
+          </article>
+
+          <div v-if="totalPages > 1" class="flex justify-center items-center space-x-3 pt-10 pb-4">
+            <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1"
+                    class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-[#A39382] hover:text-[#A39382] disabled:opacity-30 disabled:cursor-not-allowed transition">
+              <i class="fa-solid fa-chevron-left text-xs"></i>
+            </button>
+
+            <button v-for="page in totalPages" :key="page"
+                    @click="changePage(page)"
+                    :class="['w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition',
+                             currentPage === page ? 'bg-[#A39382] text-white shadow-md' : 'border border-gray-200 text-gray-500 hover:border-[#A39382] hover:text-[#A39382]']">
+              {{ page }}
+            </button>
+
+            <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages"
+                    class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-[#A39382] hover:text-[#A39382] disabled:opacity-30 disabled:cursor-not-allowed transition">
+              <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Empty State -->
-        <div class="hidden border border-gray-100 bg-white shadow-sm p-14 text-center" id="empty">
-          <p class="text-[10px] text-gray-400 uppercase tracking-[0.5em] mb-4">No Orders</p>
-          <h3 class="text-xl font-medium text-black">주문/배송 내역이 없어요</h3>
+        <div v-else class="border border-gray-100 bg-white shadow-sm p-14 text-center">
+          <p class="text-[10px] text-gray-400 uppercase tracking-[0.5em] mb-4">No History</p>
+          <h3 class="text-xl font-medium text-black">참여 내역이 없어요</h3>
           <p class="text-sm text-gray-500 font-light mt-3">
-            상품을 구매하거나 낙찰받으면 여기에 표시됩니다.
+            경매에 입찰하거나 펀딩에 참여하면 여기에 표시됩니다.
           </p>
-          <div class="flex justify-center mt-10">
-            <RouterLink
-              to="/funding/funding_list"
-              class="btn-outline px-6 py-3 text-[11px] font-bold uppercase tracking-[0.3em]"
-            >
-              Shop Now
-            </RouterLink>
-          </div>
         </div>
       </section>
     </div>

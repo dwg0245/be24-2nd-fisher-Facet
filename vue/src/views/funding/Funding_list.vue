@@ -13,7 +13,7 @@ const currentCategories = ref('all')
 
 const getlist = async (page, currentFilter, currentCategories) => {
 
-  const res = await api.fundingPageList(page,currentFilter,currentCategories)
+  const res = await api.fundingPageList(page, currentFilter, currentCategories)
   console.log("res", res.result)
 
   funding_list.length = 0
@@ -38,7 +38,7 @@ const formatNumber = (num) => {
 }
 
 onMounted(() => {
-  getlist(0,'all','all')
+  getlist(0, 'all', 'all')
 })
 </script>
 
@@ -50,12 +50,18 @@ onMounted(() => {
           Categories
         </h2>
         <ul class="space-y-6 text-gray-500">
-          <li @click="currentCategories = 'all', getlist(0,'all',currentCategories)" class="sidebar-item sidebar-active cursor-pointer">ALL ARCHIVES</li>
-          <li @click="currentCategories = 'ring', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Ring</li>
-          <li @click="currentCategories = 'Necklace', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Necklace</li>
-          <li @click="currentCategories = 'Bracelet', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Bracelet</li>
-          <li @click="currentCategories = 'Earrings', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Earrings</li>
-          <li @click="currentCategories = 'Anklet', getlist(0,'all',currentCategories)" class="sidebar-item cursor-pointer">Anklet</li>
+          <li @click="currentCategories = 'all', getlist(0, 'all', currentCategories)"
+            class="sidebar-item sidebar-active cursor-pointer">ALL ARCHIVES</li>
+          <li @click="currentCategories = 'ring', getlist(0, 'all', currentCategories)"
+            class="sidebar-item cursor-pointer">Ring</li>
+          <li @click="currentCategories = 'Necklace', getlist(0, 'all', currentCategories)"
+            class="sidebar-item cursor-pointer">Necklace</li>
+          <li @click="currentCategories = 'Bracelet', getlist(0, 'all', currentCategories)"
+            class="sidebar-item cursor-pointer">Bracelet</li>
+          <li @click="currentCategories = 'Earrings', getlist(0, 'all', currentCategories)"
+            class="sidebar-item cursor-pointer">Earrings</li>
+          <li @click="currentCategories = 'Anklet', getlist(0, 'all', currentCategories)"
+            class="sidebar-item cursor-pointer">Anklet</li>
         </ul>
       </div>
 
@@ -65,14 +71,14 @@ onMounted(() => {
         </h2>
         <div class="space-y-4">
           <label class="flex items-center space-x-3 cursor-pointer group">
-            <input type="radio" name="status-filter" 
-              @click="getlist(0, 'all',currentCategories)" class="w-3 h-3 accent-[#A39382] cursor-pointer" />
+            <input type="radio" name="status-filter" @click="getlist(0, 'all', currentCategories)"
+              class="w-3 h-3 accent-[#A39382] cursor-pointer" />
             <span class="text-xs text-gray-500 group-hover:text-black transition">현재 진행 중</span>
           </label>
 
           <label class="flex items-center space-x-3 cursor-pointer group">
-            <input type="radio" name="status-filter" 
-              @click="getlist(0, 'imminent',currentCategories)" class="w-3 h-3 accent-[#A39382] cursor-pointer" />
+            <input type="radio" name="status-filter" @click="getlist(0, 'imminent', currentCategories)"
+              class="w-3 h-3 accent-[#A39382] cursor-pointer" />
             <span class="text-xs text-gray-500 group-hover:text-black transition">마감 임박 순</span>
           </label>
         </div>
@@ -84,15 +90,13 @@ onMounted(() => {
         <p class="text-[12px] text-gray-400 tracking-wider">
           SHOWING <span class="text-black font-bold">{{ totalCount }}</span> UNIQUE PIECES
         </p>
-        <select v-model="currentFilter" @change="getlist(0, currentFilter,currentCategories)"
+        <select v-model="currentFilter" @change="getlist(0, currentFilter, currentCategories)"
           class="custom-select bg-white border border-gray-100 rounded-full px-6 py-2 text-[11px] font-bold outline-none w-40 tracking-tighter cursor-pointer hover:border-[#A39382] transition">
-          <option
-            value="all">최근
+          <option value="all">최근
             등록순</option>
-          <option  value="price">
+          <option value="price">
             낮은 가격순</option>
-          <option 
-           value="imminent">마감 임박순</option>
+          <option value="imminent">마감 임박순</option>
         </select>
       </div>
 
@@ -116,14 +120,14 @@ onMounted(() => {
               </h3>
               <div class="flex justify-between items-end pt-6 border-t border-gray-50">
                 <div>
-                  <p class="text-[9px] text-gray-300 uppercase tracking-widest mb-1">Current Bid</p>
-                  <p class="text-[15px] font-bold">₩ {{ item.price.toLocaleString() }}</p>
+                  <p class="text-[9px] text-gray-300 uppercase tracking-widest mb-1">AMOUNTR RAISED</p>
+                  <p class="text-[15px] font-bold"> {{ item.percent }} %</p>
                 </div>
                 <div class="text-right">
                   <p class="text-[9px] text-[#A39382] font-bold mb-1 uppercase tracking-widest">
-                    Time Left
+                    CLOSES ON
                   </p>
-                  <p class="text-[13px] font-medium tracking-tighter">{{ item.days }}일 남음</p>
+                  <p class="text-[13px] font-medium tracking-tighter">{{ item.endDays }} 일 마감</p>
                 </div>
               </div>
             </div>
@@ -138,7 +142,7 @@ onMounted(() => {
           </svg>
         </button>
         <div class="flex space-x-6 text-[11px] font-bold tracking-widest">
-          <span v-for="item in totalPage" :key="pageNo" @click="getlist(item - 1,currentFilter,currentCategories)"
+          <span v-for="item in totalPage" :key="pageNo" @click="getlist(item - 1, currentFilter, currentCategories)"
             class="text-[#A39382] border-[#A39382] pb-1">{{ formatNumber(item) }}</span>
         </div>
         <button class="text-gray-300 hover:text-[#A39382] transition">
@@ -148,6 +152,8 @@ onMounted(() => {
         </button>
       </div>
     </main>
+
+
   </div>
 </template>
 

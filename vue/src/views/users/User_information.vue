@@ -2,10 +2,97 @@
 import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
+import api from '@/api/user/index.js'
 
 const authStore = useAuthStore()
-const userInfo = ref('')
+
 const router = useRouter()
+const userInfo = ref({
+  userName: '',
+  phoneNumber: '',
+  address: '',
+  birthDate: ''
+})
+
+const passwordData = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const changePassword = async () => {
+  //두 변수를 비교해서 오타가 있는지 확인
+  if (passwordData.value.newPassword !== passwordData.value.confirmPassword){
+    alert("새 비밀번호가 일치하지 않습니다")
+    return
+  }
+
+  try {
+    const res = await axios.post('/api/user/updatepassword', {
+      currentPassword: passwordData.value.currentPassword,
+      newPassword: passwordData.value.newPassword
+    }, { withCredentials: true })
+    
+    if (res.data.success || res.data.isSuccess) {
+      alert('비밀번호가 성공적으로 변경되었습니다. 보안을 위해 다시 로그인해 주세요.')
+
+      authStore.logout()
+      document.cookie = "ATOKEN=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+
+      router.push('/login')
+    }
+  } catch (error) {
+    alert(error.response?.data?.message || "비밀번호 변경에 실패했습니다. 현재 비밀번호를 확인해 주세요.")
+  }
+}
+
+const fetchUserInfo = async () => {
+  try {
+    const res = await axios.get('/api/user/getuserinfo', {
+      withCredentials: true
+    })
+    if (res.data.success || res.data.isSuccess || res.data.code === 2000) {
+      const data = res.data.result;
+
+      userInfo.value.phoneNumber = data.phoneNumber; // 전화번호
+      userInfo.value.address = data.address;         // 주소
+      userInfo.value.birthDate = data.birthDate;
+
+      console.log('DB에서 성공적으로 불러온 정보:', userInfo.value);
+    }
+    } catch (error) {
+    console.error('정보를 불러오지 못했습니다.', error)
+  }
+}
+onMounted(() => {
+  fetchUserInfo()
+})
+
+const saveUserInfo = async () => {
+  try {
+    const res = await axios.post('/api/user/updateuserinfo',{
+      phoneNumber: userInfo.value.phoneNumber,
+      address: userInfo.value.address,
+      birthDate: userInfo.value.birthDate
+    }, {
+      withCredentials: true
+    })
+
+    if (res.data.isSuccess) {
+      alert('개인정보가 성공적으로 저장되었습니다! 🎉')
+      userInfo.value = res.data.result 
+    }
+  } catch (error) {
+    alert('정보 저장에 실패했습니다.')
+    console.error(error)
+  }
+}
+
+onMounted(() => {
+  // 화면이 켜지자마자 백엔드에서 정보 가져오기!
+  fetchUserInfo()
+})
 
 onMounted(() => {
   // 1. 창고에서 데이터 꺼내기
@@ -21,9 +108,19 @@ onMounted(() => {
   }
 })
 
-const logout = () => {
-  authStore.logout()
-  router.push('/')
+const logout = async () => {
+  try {
+    // 쿠키 삭제를 위한 백엔드 통신
+    const res = await api.logout()
+    if (res.status == 200) {
+      authStore.logout(JSON.stringify(res.data))
+      router.push('/')
+    } else {
+      alert('다시 시도해주세요.')
+    }
+  } catch (error) {
+    alert('다시 시도해주세요.')
+  }
 }
 </script>
 
@@ -59,7 +156,7 @@ const logout = () => {
             :to="{ name: 'shipping' }"
             class="block py-3 px-4 border border-gray-100 hover:border-gray-200 transition"
           >
-            주문/배송
+            주문/참여내역
           </RouterLink>
 
           <RouterLink
@@ -134,6 +231,7 @@ const logout = () => {
               </button>
               <button
                 id="saveBtn"
+                @click="saveUserInfo" 
                 class="btn-outline px-5 py-3 text-[11px] font-bold uppercase tracking-[0.25em]"
               >
                 저장
@@ -166,25 +264,25 @@ const logout = () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
               <label class="field-label">Name</label>
-              <input class="field" type="text" v-model="userInfo.userName" placeholder="이름" />
+              <input class="field" type="text" v-model="userInfo.userName" placeholder="이름" readonly />
               <p class="hint">실명 기반 거래/배송을 위해 정확히 입력해 주세요.</p>
             </div>
 
             <div class="space-y-2">
               <label class="field-label">Phone</label>
-              <input class="field" type="text" value="010-1234-5678" placeholder="휴대폰 번호" />
+              <input class="field" type="text" v-model="userInfo.phoneNumber" placeholder="휴대폰 번호" />
               <p class="hint">배송 알림 및 보안 인증에 사용됩니다.</p>
             </div>
 
             <div class="space-y-2">
-              <label class="field-label">Email</label>
-              <input class="field" type="email" v-model="userInfo.email" placeholder="이메일" />
+              <label class="field-label">Address</label>
+              <input class="field" type="text" v-model="userInfo.address" placeholder="주소" />
               <p class="hint">영수증/공지/문의 답변 수신에 사용됩니다.</p>
             </div>
 
             <div class="space-y-2">
               <label class="field-label">Birthday</label>
-              <input class="field" type="date" value="2000-01-01" />
+              <input class="field" type="date" v-model="userInfo.birthDate" />
               <p class="hint">연령 인증이 필요한 서비스에 활용될 수 있어요.</p>
             </div>
           </div>
@@ -304,20 +402,18 @@ const logout = () => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
               <label class="field-label">Current Password</label>
-              <input class="field" type="password" value="password" placeholder="현재 비밀번호" />
+              <input class="field" type="password" v-model="passwordData.currentPassword" placeholder="현재 비밀번호" />
             </div>
             <div class="space-y-2">
               <label class="field-label">New Password</label>
-              <input class="field" type="password" placeholder="새 비밀번호" />
+              <input class="field" type="password" v-model="passwordData.newPassword" placeholder="새 비밀번호" />
             </div>
             <div class="space-y-2">
               <label class="field-label">Confirm</label>
-              <input class="field" type="password" placeholder="새 비밀번호 확인" />
+              <input class="field" type="password" v-model="passwordData.confirmPassword" placeholder="새 비밀번호 확인" />
             </div>
             <div class="flex items-end">
-              <button
-                class="btn-outline w-full py-4 font-bold text-[11px] tracking-[0.35em] uppercase"
-              >
+              <button @click="changePassword" class="btn-outline w-full py-4 font-bold text-[11px] tracking-[0.35em] uppercase">
                 비밀번호 변경
               </button>
             </div>

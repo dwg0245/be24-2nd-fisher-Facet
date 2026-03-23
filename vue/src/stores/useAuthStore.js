@@ -2,6 +2,8 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios' // api 대신 axios로 명확히 임포트
 
+
+
 export const useAuthStore = defineStore('auth', () => {
   // 1. 초기값 설정: 로컬스토리지에 데이터가 있으면 바로 true로 시작!
   const isLogin = ref(!!localStorage.getItem('USERINFO'))
@@ -53,3 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return { isLogin, user, checkLogin, login, logout, validateToken }
 })
+
+
+export default useAuthStore;
+
