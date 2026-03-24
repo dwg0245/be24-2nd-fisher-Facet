@@ -7,11 +7,12 @@ const currentList = reactive([])
 
 const getlist = async () => {
   const res = await api.mainfundList()
-  // console.log("res.result", res.result)
+
 
   if (res.code == 2000) {
     funding_list.push(...res.result)
     currentList.push(...res.result)
+
   } else {
     alert('list.json 파일을 불러오지 못하였음')
   }
@@ -26,9 +27,9 @@ const currentItem = () => {
     currentList.sort((a, b) => a.idx - b.idx)
   }
 
-  if (currentFilter.value === 'imminent') {
+  if (currentFilter.value === 'percent') {
     // '마감 임박' 클릭 시: days(남은 일수)가 적은 순으로 정렬
-    currentList.sort((a, b) => a.days - b.days)
+    currentList.sort((a, b) => b.percent - a.percent)
   }
 
   return currentList
@@ -81,11 +82,11 @@ onMounted(() => {
           전체
         </button>
         <button
-          @click="((currentFilter = 'imminent'), currentItem())"
-          :class="currentFilter == 'imminent' ? 'border-black' : ''"
+          @click="((currentFilter = 'percent'), currentItem())"
+          :class="currentFilter == 'percent' ? 'border-black' : ''"
           class="px-5 py-2 text-xs font-bold rounded-full transition-all border text-black hover:border-black"
         >
-          마감임
+          인기순
         </button>
         
       </div>
@@ -110,7 +111,7 @@ onMounted(() => {
               <span
                 class="bg-black/80 backdrop-blur-md text-white px-3 py-1 text-[10px] font-bold rounded-full tracking-tighter uppercase"
               >
-                {{ item.days }}일 남음
+                {{ item.status }}
               </span>
             </div>
           </div>
@@ -132,7 +133,7 @@ onMounted(() => {
                   {{ item.percent.toLocaleString() }}<span class="text-xs ml-0.5">%</span>
                 </span>
                 <span class="text-[13px] font-medium text-gray-900">
-                  모인 금액 {{ item.totalPrice.toLocaleString() }}</span>
+                  모인 금액 {{ item.targetPrice.toLocaleString() }}</span>
               </div>
               <div class="w-full h-[2px] bg-gray-100 overflow-hidden rounded-full">
                 <div

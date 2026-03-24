@@ -14,7 +14,8 @@ const authStore = useAuthStore()
 
 // 선택된 리워드 데이터 가져오기 (반응형 유지를 위해 computed 권장)
 const selectedRewards = computed(() => rewardStore.selectedRewards);
-const finalPrice = computed(() => rewardStore.totalPrice);
+const finalPrice = computed(() => rewardStore.targetPrice);
+console.log("finalPrice",finalPrice.value)
 const productIdx = computed(() => rewardStore.productIdx);
   console.log("피니아 후",productIdx.value)
 
@@ -118,7 +119,7 @@ const onPayment = async () => {
 
         const orderDto = ({
             productIdx: productIdx.value,
-            price: totalAmount.value,
+            targetPrice: totalAmount.value,
             ordersItems: ordersItemsList
         });
 

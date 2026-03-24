@@ -49,6 +49,8 @@ const paginatedList = computed(() => {
   return filteredList.value.slice(start, end)
 })
 
+console.log("paginatedList",paginatedList)
+
 // 페이지 이동 함수
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {

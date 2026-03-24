@@ -6,8 +6,8 @@ const mainfundList = async () => {
   return res.data
 }
 
-const fundingPageList = async (page,currentFilter,currentCategories) =>{
-  const res = await api.get(`/funding/fundingPageList?page=${page}&size=9&currentFilter=${currentFilter}&currentCategories=${currentCategories}`)
+const fundingPageList = async (page,currentFilter,currentCategories,currentStatus) =>{
+  const res = await api.get(`/funding/fundingPageList?page=${page}&size=9&currentFilter=${currentFilter}&currentCategories=${currentCategories}&currentStatus=${currentStatus}`)
   //console.log("펀딩 페이지 리스트",res.data)
   return res.data
 }

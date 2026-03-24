@@ -27,7 +27,7 @@ const getDesc = async () => {
   const idx = route.params.idx
   const res = await api.FundingDesc(idx)
   fundingDesc.value = res.result
-  console.log(fundingDesc.value)
+
   mainImage.value = res.result.img
 
   calculateTimeLeft()
@@ -83,7 +83,7 @@ const removeReward = (id) => {
 }
 
 // --- 총 금액 계산 ---
-const totalPrice = computed(() => {
+const targetPrice = computed(() => {
   return currentSelected.value.reduce((acc, i) => acc + (i.price * i.quantity), 0)
 })
 
@@ -91,9 +91,8 @@ const totalPrice = computed(() => {
 const selectAndGo = () => {
   if (currentSelected.value.length === 0) return
   const idx = route.params.idx
-  console.log("피니아 전", idx)
-  rewardStore.updateRewards(idx, currentSelected.value, totalPrice.value)
-  router.push({ name: 'payment' })
+  rewardStore.updateRewards(idx, currentSelected.value, targetPrice.value)
+
 }
 
 // --- 메인 이미지 변경 ---
@@ -357,7 +356,7 @@ onUnmounted(() => {
                 <div class="space-x-2">
                   <span class="text-gray-400 text-[11px]">모인 금액</span>
                   <span class="text-gray-900 font-medium" id="raised">
-                    ₩ {{ Number(fundingDesc.totalPrice).toLocaleString() }}</span>
+                    ₩ {{ Number(fundingDesc.targetPrice).toLocaleString() }}</span>
                 </div>
                 <div class="space-x-2">
                   <span class="text-gray-400 text-[11px]">목표</span>
@@ -457,7 +456,7 @@ onUnmounted(() => {
 
           <div class="flex items-center justify-between pt-4 border-t border-gray-100">
             <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400">Total Amount</p>
-            <p class="text-xl font-bold text-[#A39382]">₩ {{ totalPrice.toLocaleString() }}</p>
+            <p class="text-xl font-bold text-[#A39382]">₩ {{ targetPrice.toLocaleString() }}</p>
           </div>
           <button @click="selectAndGo" :disabled="currentSelected.length === 0"
             class="w-full py-4 bg-[#9B8A7E] text-white font-bold text-xs tracking-[0.3em] uppercase rounded-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#8e7f74] transition-colors">
