@@ -1,9 +1,9 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_BACKEND_URL
+// const API_URL = import.meta.env.VITE_BACKEND_URL
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: "https://www.facet7.kro.kr/api",
   withCredentials: true,
   timeout: 5000000000,
 })
