@@ -89,6 +89,8 @@ spec:
         echo "Pushed: ${IMAGE_NAME}:${IMAGE_TAG}"
       }
     }
+
+    
   }
 }
 

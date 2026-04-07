@@ -8,7 +8,7 @@ services:
       dockerfile: ../vue/Dockerfile
       # dockerfile에게 환경변수를 넘겨준다.
       args:
-        - VITE_BACKEND_URL=http://www.facet7.kro.kr
+        - VITE_BACKEND_URL=http://www.facet7.kro.kr/api
     ports:
       - "80:80"  # 나중에 인증서 하면 443번으로 하기
       - "443:443"
