@@ -32,6 +32,11 @@ spec:
           mountPath: /home/jenkins/agent
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
+      resources:
+        requests:
+          ephemeral-storage: "1Gi"  # 최소 1GB는 내꺼라고 찜하기
+        limits:
+          ephemeral-storage: "3Gi"  # 최대 3GB까지 허용
       command: ['/busybox/sh','-c','sleep infinity']
       tty: true
       volumeMounts:
@@ -39,6 +44,7 @@ spec:
           mountPath: /kaniko/.docker
         - name: workspace
           mountPath: /workspace
+      
   volumes:
     - name: workspace
       emptyDir: {}
