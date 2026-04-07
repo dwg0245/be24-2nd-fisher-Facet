@@ -121,14 +121,17 @@ cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: ${NAMESPACE}
   name: frontend-deployment-${targetColor}
+  labels:
+    type: frontend
+    version: ${targetColor}
 spec:
+  replicas: 1
   selector:
     matchLabels:
       type: frontend
-      version: ${targetColor}
-  replicas: 1
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -138,8 +141,12 @@ spec:
       containers:
         - name: frontend
           image: ${IMAGE_NAME}:${IMAGE_TAG}
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: env-config
 EOF
                         """
 
