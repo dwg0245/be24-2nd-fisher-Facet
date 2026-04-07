@@ -103,7 +103,7 @@ const changePoint = async () => {
   
     // 3. 백엔드에 결제 검증 및 충전 요청
     // ==========================================================
-    const verifyRes = await axios.post('https://www.facet7.kro.kr:8080/point/verify', {
+    const verifyRes = await axios.post('https://www.facet7.kro.kr/api/point/verify', {
       paymentId: paymentResponse.paymentId, 
       pointIdx: pointIdx 
     }, {
