@@ -13,9 +13,6 @@ spec:
       image: node:22.17.1-bullseye
       command: ['cat']
       tty: true
-      volumeMounts:      
-        - name: workspace    # [추가] node도 공유 폴더를 봐야 함
-          mountPath: /workspace
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command: ['/busybox/sh','-c','sleep infinity']
@@ -24,13 +21,13 @@ spec:
         - name: docker-config
           mountPath: /kaniko/.docker
         - name: workspace
-          mountPath: /workspace
+          mountPath: /workspace/frontend
   volumes:
     - name: workspace
       emptyDir: {}
     - name: docker-config
       secret:
-        secretName: dockerhub-cred
+        secretName: dockerhub-front
         items:
           - key: .dockerconfigjson
             path: config.json
