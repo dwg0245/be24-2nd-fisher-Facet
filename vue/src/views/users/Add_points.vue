@@ -68,7 +68,7 @@ const changePoint = async () => {
     // ==========================================================
     // 1. 백엔드에 결제 준비(READY) 요청 
     // ==========================================================
-    const createRes = await axios.post('http://localhost:8080/point/create', {
+    const createRes = await axios.post('https://www.facet7.kro.kr/api/point/create', {
       amount: totalPoints.value
     }, {
       withCredentials: true 
@@ -142,7 +142,7 @@ const changePoint = async () => {
 const fetchCurrentPoint = async () => {
   try {
     // 💡 주의: 아래 주소는 회원님의 실제 '유저 정보 조회 API' 주소로 변경하셔야 합니다! (예: /user/info, /user/mypage 등)
-    const res = await axios.get('http://localhost:8080/point/current', {
+    const res = await axios.get('https://www.facet7.kro.kr/api/point/current', {
       withCredentials: true
     });
 
