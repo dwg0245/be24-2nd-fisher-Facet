@@ -34,8 +34,8 @@ const login = async () => {
 
 // 환경 변수 로드
 
-const kakaoRedirectUri = 'http://localhost:8080/oauth2/authorization/kakao'
-const googleRedirectUri = 'http://localhost:8080/oauth2/authorization/google'
+const kakaoRedirectUri = 'https://www.facet7.kro.kr/api/oauth2/authorization/kakao'
+const googleRedirectUri = 'https://www.facet7.kro.kr/api/oauth2/authorization/google'
 
 const targetPath = (redirectPath && redirectPath !== 'undefined')
   ? redirectPath
