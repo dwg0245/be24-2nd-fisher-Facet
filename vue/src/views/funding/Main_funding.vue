@@ -58,7 +58,7 @@ onMounted(() => {
           Heritage in<br />Modern Glow
         </h1>
         <p class="text-gray-300 text-sm md:text-base font-light leading-relaxed mb-10 max-w-lg">
-          시간이 흘러도 변하지 않는 가치. 아티스트의 영감이 깃든 단 하나의 주얼리를 FACET 펀딩을
+          시간이 흘러도 변하지 않는 가치. 아티스트의 영감이 깃든 단 하나의 주얼리를 facet 펀딩을
           통해 소유하십시오.
         </p>
       </div>
