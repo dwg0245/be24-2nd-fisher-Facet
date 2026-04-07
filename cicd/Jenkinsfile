@@ -13,13 +13,16 @@ spec:
       image: node:22.17.1-bullseye
       command: ['cat']
       tty: true
+      volumeMounts:             
+        - name: workspace       
+          mountPath: /workspace 
     - name: kubectl
       image: bitnami/kubectl:latest  # kubectl이 설치된 가벼운 이미지
       command: ['cat']
       tty: true
-      volumeMounts:             
-        - name: workspace       
-          mountPath: /workspace 
+      volumeMounts:
+        - name: workspace-volume  # 젠킨스가 내부적으로 사용하는 볼륨 이름
+          mountPath: /home/jenkins/agent
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command: ['/busybox/sh','-c','sleep infinity']
