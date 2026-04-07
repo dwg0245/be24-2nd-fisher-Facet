@@ -92,7 +92,7 @@ const selectAndGo = () => {
   if (currentSelected.value.length === 0) return
   const idx = route.params.idx
   rewardStore.updateRewards(idx, currentSelected.value, targetPrice.value)
-  router.push('/features/payment')
+  router.push('funding/payment')
 
 }
 
