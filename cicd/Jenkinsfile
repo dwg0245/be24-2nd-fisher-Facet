@@ -13,11 +13,6 @@ spec:
       image: node:22.17.1-bullseye
       command: ['cat']
       tty: true
-      resources:
-        requests:
-          ephemeral-storage: "2Gi"  # 최소 500MB 확보 요청
-        limits:
-          ephemeral-storage: "4Gi"    # 최대 2GB까지만 사용 제한
       volumeMounts:             
         - name: workspace       
           mountPath: /workspace 
@@ -32,11 +27,6 @@ spec:
           mountPath: /home/jenkins/agent
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
-      resources:
-        requests:
-          ephemeral-storage: "2Gi"  # 최소 1GB는 내꺼라고 찜하기
-        limits:
-          ephemeral-storage: "6Gi"  # 최대 3GB까지 허용
       command: ['/busybox/sh','-c','sleep infinity']
       tty: true
       volumeMounts:
@@ -116,6 +106,8 @@ spec:
             steps {
                 container('kubectl') {
                     script {
+                        sh "sleep 10"
+
                         // 홀수/짝수 판별
                         def isEven = (IMAGE_TAG.toInteger() % 2 == 0)
                         def targetColor = isEven ? "green" : "blue"
