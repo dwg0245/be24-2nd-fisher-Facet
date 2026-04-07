@@ -135,8 +135,8 @@ const onPayment = async () => {
 
         // 2단계: 실제 포트원 결제창을 띄웁니다.
         const payment = await PortOne.requestPayment({
-            storeId: import.meta.env.VITE_PAYMENT_STOREID,   // 내 상점 식별자
-            channelKey: import.meta.env.VITE_PATMENT_CHANNELKEY, // 결제 채널(카카오페이 등) 키
+            storeId: "store-c4620c46-17fa-4ebc-ac59-8d04c156cbf4",   // 내 상점 식별자
+            channelKey: "channel-key-dafcb684-1f58-465d-9fad-97b92723116d", // 결제 채널(카카오페이 등) 키
             paymentId: `facet_${timestamp}_${shortUuid}`, // 이번 결제의 고유 번호, 결과: facet_20260319004654_a1b2c3d4
             orderName: orderName,      // 결제창에 뜰 이름
             totalAmount: totalAmount.value, // 결제할 금액

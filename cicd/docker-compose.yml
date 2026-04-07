@@ -7,10 +7,10 @@ services:
       context: ../vue
       dockerfile: ../vue/Dockerfile
       # dockerfile에게 환경변수를 넘겨준다.
-      args:
-        - VITE_PAYMENT_STOREID=${VITE_PAYMENT_STOREID}
-        - VITE_PAYMENT_CHANNELKEY=${VITE_PATMENT_CHANNELKEY}
-              #   - VITE_BACKEND_URL=https://www.facet7.kro.kr/api
+      # args:
+      #   - VITE_PAYMENT_STOREID=${VITE_PAYMENT_STOREID}
+      #   - VITE_PAYMENT_CHANNELKEY=${VITE_PATMENT_CHANNELKEY}
+      #         #   - VITE_BACKEND_URL=https://www.facet7.kro.kr/api
         
     ports:
       - "80:80"  # 나중에 인증  서 하면 443번으로 하기
