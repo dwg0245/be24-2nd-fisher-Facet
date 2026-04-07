@@ -21,13 +21,14 @@ spec:
       volumeMounts:             
         - name: workspace       
           mountPath: /workspace 
-
     - name: kubectl
       image: bitnami/kubectl:latest  # kubectl이 설치된 가벼운 이미지
       command: ['cat']
       tty: true
       volumeMounts:
-        - name: workspace-volume  # 젠킨스가 내부적으로 사용하는 볼륨 이름
+        - name: workspace         # 프로젝트 공유 공간
+          mountPath: /workspace
+        - name: workspace-volume  # 젠킨스가 sh를 실행하는 기본 위치
           mountPath: /home/jenkins/agent
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
@@ -161,7 +162,7 @@ spec:
     version: ${targetColor}
   ports:
   - port: 80
-    targetport: 80
+    targetPort: 80
 EOF
                         """
 
