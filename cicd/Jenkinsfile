@@ -41,6 +41,7 @@ spec:
   environment {
     IMAGE_NAME = 'dwg0245/front_facet'
     IMAGE_TAG  = "${env.BUILD_NUMBER}"
+    NAMESPACE = "default"
   }
   stages {
     stage('Checkout') {
@@ -90,6 +91,74 @@ spec:
       }
     }
 
+
+    stage('Blue-Green Deployment') {
+            steps {
+                container('node') {
+                    script {
+                        // 홀수/짝수 판별
+                        def isEven = (IMAGE_TAG.toInteger() % 2 == 0)
+                        def targetColor = isEven ? "green" : "blue"
+                        def idleColor = isEven ? "blue" : "green"
+                        
+                        echo "현재 빌드 번호: ${env.BUILD_NUMBER} -> 배포 대상: ${targetColor.toUpperCase()}"
+
+                        // 1. 새로운 버전 Deployment 생성/업데이트
+                        sh """
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ${NAMESPACE}
+  name: frontend-deployment-${targetColor}
+spec:
+  selector:
+    matchLabels:
+      type: frontend
+      version: ${targetColor}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        type: frontend
+        version: ${targetColor}
+    spec:
+      containers:
+        - name: frontend
+          image: ${IMAGE_NAME}:${IMAGE_TAG}
+          ports:
+            - containerPort: 80
+EOF
+                        """
+
+                        // 2. 배포 완료 대기
+                        sh "kubectl rollout status deployment/frontend-deployment-${targetColor} -n ${NAMESPACE}"
+
+                        // 3. Service 가리키는 방향 전환 (Switching)
+                        sh """
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: ${NAMESPACE}
+  name: frontend-svc
+spec:
+  selector:
+    type: frontend
+    version: ${targetColor}
+  ports:
+  - port: 80
+    target_port: 80
+EOF
+                        """
+
+                        // 4. 이전 버전 Deployment Scale Down (리소스 절약)
+                        echo "이전 버전(${idleColor})을 정리합니다."
+                        sh "kubectl scale deployment frontend-deployment-${idleColor} --replicas=0 -n ${NAMESPACE} || true"
+                    }
+                }
+            }
+        }
     
   }
 }
