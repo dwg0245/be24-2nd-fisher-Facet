@@ -15,9 +15,9 @@ spec:
       tty: true
       resources:
         requests:
-          ephemeral-storage: "500Mi"  # 최소 500MB 확보 요청
+          ephemeral-storage: "2Gi"  # 최소 500MB 확보 요청
         limits:
-          ephemeral-storage: "2Gi"    # 최대 2GB까지만 사용 제한
+          ephemeral-storage: "4Gi"    # 최대 2GB까지만 사용 제한
       volumeMounts:             
         - name: workspace       
           mountPath: /workspace 
@@ -34,9 +34,9 @@ spec:
       image: gcr.io/kaniko-project/executor:debug
       resources:
         requests:
-          ephemeral-storage: "1Gi"  # 최소 1GB는 내꺼라고 찜하기
+          ephemeral-storage: "2Gi"  # 최소 1GB는 내꺼라고 찜하기
         limits:
-          ephemeral-storage: "3Gi"  # 최대 3GB까지 허용
+          ephemeral-storage: "6Gi"  # 최대 3GB까지 허용
       command: ['/busybox/sh','-c','sleep infinity']
       tty: true
       volumeMounts:
