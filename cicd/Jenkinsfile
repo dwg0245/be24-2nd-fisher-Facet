@@ -21,7 +21,7 @@ spec:
         - name: docker-config
           mountPath: /kaniko/.docker
         - name: workspace
-          mountPath: /workspace/frontend
+          mountPath: /workspace
   volumes:
     - name: workspace
       emptyDir: {}
@@ -55,6 +55,7 @@ spec:
       steps {
         container('node') {
           sh '''
+            cd vue
             npm i
             npm run build
           '''
