@@ -29,10 +29,10 @@ spec:
       tty: true
       resources:
         requests:
-          memory: "32Mi"
+          memory: "128Mi"
           cpu: "100m"
         limits:
-          memory: "128Mi"
+          memory: "256Mi"
           cpu: "200m"
       volumeMounts:
         - name: workspace         # 프로젝트 공유 공간
@@ -127,12 +127,7 @@ spec:
                 container('kubectl') {
                     script {
                         sh "sleep 15"
-
-                        // 홀수/짝수 판별
-                        def isEven = (IMAGE_TAG.toInteger() % 2 == 0)
-                        def targetColor = isEven ? "green" : "blue"
-                        def idleColor = isEven ? "blue" : "green"
-                        
+                        def targetColor = "blue"
                         echo "현재 빌드 번호: ${env.BUILD_NUMBER} -> 배포 대상: ${targetColor.toUpperCase()}"
 
                         // 1. 새로운 버전 Deployment 생성/업데이트
@@ -146,12 +141,11 @@ metadata:
     type: frontend
     version: ${targetColor}
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       type: frontend
-      version: ${targetColor}
-  strategy:
+      version: ${targetColor}ㄴ
     type: RollingUpdate
   template:
     metadata:
@@ -193,9 +187,6 @@ spec:
 EOF
                         """
 
-                        // 4. 이전 버전 Deployment Scale Down (리소스 절약)
-                        echo "이전 버전(${idleColor})을 정리합니다."
-                        sh "kubectl scale deployment frontend-deployment-${idleColor} --replicas=0 -n ${NAMESPACE} || true"
                     }
                 }
             }
