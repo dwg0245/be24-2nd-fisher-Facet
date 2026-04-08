@@ -159,15 +159,16 @@ cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: ${NAMESPACE}
-  name: frontend-svc
+  name: frontend-service
 spec:
+  type: LoadBalancer
   selector:
-    type: frontend
+    app: frontend          
     version: ${targetColor}
   ports:
-  - port: 80
-    targetPort: 80
+    - name: http
+      port: 80              
+      targetPort: 80    
 EOF
                         """
 
