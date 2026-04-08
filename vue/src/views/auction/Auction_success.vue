@@ -10,11 +10,11 @@ const productName = ref('Midnight Sapphire Emerald Ring')
 
 <template>
   <div
-    id="auctionStatus"
-    class="winner-status-bar bg-[#A39382] text-white border-b border-[#8E7F6F] shadow-md"
+      id="auctionStatus"
+      class="winner-status-bar bg-[#A39382] text-white border-b border-[#8E7F6F] shadow-md"
   >
     <div
-      class="max-w-7xl mx-auto px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+        class="max-w-7xl mx-auto px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
     >
       <div>
         <p class="text-[10px] uppercase tracking-[0.3em] text-white/80 font-bold">Winner Status</p>
@@ -37,13 +37,13 @@ const productName = ref('Midnight Sapphire Emerald Ring')
       <div class="space-y-6">
         <div class="relative bg-gray-50 border border-gray-100 overflow-hidden shadow-sm">
           <img
-            src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80"
-            class="w-full object-cover"
-            alt="product"
+              src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80"
+              class="w-full object-cover"
+              alt="product"
           />
 
           <div
-            class="absolute inset-0 bg-[#A39382]/20 flex flex-col items-center justify-center text-center border-4 border-[#A39382]/50 m-4"
+              class="absolute inset-0 bg-[#A39382]/20 flex flex-col items-center justify-center text-center border-4 border-[#A39382]/50 m-4"
           >
             <div class="bg-white/90 p-8 backdrop-blur-sm shadow-2xl">
               <p class="luxury-font text-3xl tracking-[0.35em] text-[#A39382] mb-3">
@@ -58,7 +58,7 @@ const productName = ref('Midnight Sapphire Emerald Ring')
 
       <div class="flex flex-col">
         <span
-          class="inline-block px-3 py-1 bg-[#A39382] text-white text-[10px] font-bold rounded-full mb-4 tracking-widest uppercase self-start"
+            class="inline-block px-3 py-1 bg-[#A39382] text-white text-[10px] font-bold rounded-full mb-4 tracking-widest uppercase self-start"
         >
           Successfully Won
         </span>
@@ -102,13 +102,13 @@ const productName = ref('Midnight Sapphire Emerald Ring')
 
           <div class="flex flex-col gap-3 mt-8">
             <button
-              class="w-full bg-black text-white px-6 py-5 text-[12px] font-bold uppercase tracking-[0.3em] hover:bg-[#A39382] transition-all duration-500 shadow-lg"
+                class="w-full bg-black text-white px-6 py-5 text-[12px] font-bold uppercase tracking-[0.3em] hover:bg-[#A39382] transition-all duration-500 shadow-lg"
             >
               지금 결제하기 (Checkout Now)
             </button>
             <RouterLink
-              to="/mypage/orders"
-              class="w-full text-center px-6 py-4 text-[11px] font-bold uppercase tracking-[0.3em] border border-gray-200 hover:border-black transition"
+                to="/mypage/orders"
+                class="w-full text-center px-6 py-4 text-[11px] font-bold uppercase tracking-[0.3em] border border-gray-200 hover:border-black transition"
             >
               주문 상세 내역 보기
             </RouterLink>

@@ -50,13 +50,13 @@ const goToPage = (num) => {
           <label class="flex items-center space-x-3 cursor-pointer group">
             <input type="checkbox" class="w-3 h-3 accent-[#A39382]" checked />
             <span class="text-xs text-gray-500 group-hover:text-black transition"
-              >현재 진행 중</span
+            >현재 진행 중</span
             >
           </label>
           <label class="flex items-center space-x-3 cursor-pointer group">
             <input type="checkbox" class="w-3 h-3 accent-[#A39382]" />
             <span class="text-xs text-gray-500 group-hover:text-black transition"
-              >마감 임박 순</span
+            >마감 임박 순</span
             >
           </label>
         </div>
@@ -70,7 +70,7 @@ const goToPage = (num) => {
           PIECES
         </p>
         <select
-          class="custom-select bg-white border border-gray-100 rounded-full px-6 py-2 text-[11px] font-bold outline-none w-40 tracking-tighter cursor-pointer hover:border-[#A39382] transition"
+            class="custom-select bg-white border border-gray-100 rounded-full px-6 py-2 text-[11px] font-bold outline-none w-40 tracking-tighter cursor-pointer hover:border-[#A39382] transition"
         >
           <option>최근 등록순</option>
           <option>낮은 가격순</option>
@@ -80,31 +80,31 @@ const goToPage = (num) => {
 
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-10">
         <div
-          class="premium-card bg-white rounded-3xl overflow-hidden cursor-pointer group"
-          v-for="item in auction_list"
+            class="premium-card bg-white rounded-3xl overflow-hidden cursor-pointer group"
+            v-for="item in auction_list"
         >
           <!-- {{ item }} -->
           <RouterLink :to="`/auction/detail/${item.idx}`" class="block">
             <div class="relative overflow-hidden aspect-[4/5]">
               <img
-                :src="item.image"
-                class="w-full h-full object-cover transition duration-700 group-hover:scale-110"
+                  :src="item.image"
+                  class="w-full h-full object-cover transition duration-700 group-hover:scale-110"
               />
               <div
-                v-if="item.status == 'BEFORE'"
-                class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
+                  v-if="item.status == 'BEFORE'"
+                  class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
               >
                 UPCOMING
               </div>
               <div
-                v-else-if="item.status == 'END'"
-                class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
+                  v-else-if="item.status == 'END'"
+                  class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
               >
                 END
               </div>
               <div
-                v-else
-                class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
+                  v-else
+                  class="absolute top-5 right-5 status-badge px-4 py-1.5 rounded-full font-bold"
               >
                 LIVE
               </div>
@@ -137,20 +137,20 @@ const goToPage = (num) => {
         <button class="text-gray-300 hover:text-[#A39382] transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
-              d="M15 19l-7-7 7-7"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+                d="M15 19l-7-7 7-7"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
             />
           </svg>
         </button>
         <div class="flex space-x-6 text-[11px] font-bold tracking-widest">
           <span
-            v-for="pageNumber in totalPages"
-            :key="pageNumber - 1"
-            @click="goToPage(pageNumber)"
-            class="cursor-pointer transition pb-1"
-            :class="{
+              v-for="pageNumber in totalPages"
+              :key="pageNumber - 1"
+              @click="goToPage(pageNumber)"
+              class="cursor-pointer transition pb-1"
+              :class="{
               'text-[#A39382] border-b border-[#A39382]': currentPage === pageNumber,
               'text-gray-300 hover:text-black': currentPage !== pageNumber,
             }"
@@ -161,10 +161,10 @@ const goToPage = (num) => {
         <button class="text-gray-300 hover:text-[#A39382] transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
-              d="M9 5l7 7-7 7"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+                d="M9 5l7 7-7 7"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
             />
           </svg>
         </button>

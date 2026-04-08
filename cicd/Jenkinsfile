@@ -47,7 +47,7 @@ spec:
           memory: "1Gi"  # Kaniko는 빌드 시 메모리를 많이 먹습니다.
           cpu: "500m"
         limits:
-          memory: "2Gi"
+          memory: "1.2Gi"
           cpu: "1000m"
       volumeMounts:
         - name: docker-config
@@ -126,7 +126,7 @@ spec:
             steps {
                 container('kubectl') {
                     script {
-                        sh "sleep 10"
+                        sh "sleep 15"
 
                         // 홀수/짝수 판별
                         def isEven = (IMAGE_TAG.toInteger() % 2 == 0)

@@ -34,7 +34,7 @@ onMounted(() => {
         <div class="flex items-center space-x-12">
           <RouterLink :to="{ name: 'Main_root' }" class="flex items-center">
             <div
-              class="luxury-font text-2xl font-bold tracking-[0.3em] text-[#A39382] uppercase cursor-pointer leading-none mt-1"
+                class="luxury-font text-2xl font-bold tracking-[0.3em] text-[#A39382] uppercase cursor-pointer leading-none mt-1"
             >
               Facet
             </div></RouterLink
@@ -42,24 +42,24 @@ onMounted(() => {
 
           <nav class="hidden lg:flex items-center space-x-8 text-[14px] font-medium text-gray-500">
             <RouterLink
-              :to="{ name: 'Main_root' }"
-              :class="
+                :to="{ name: 'Main_root' }"
+                :class="
                 isFunding
                   ? 'hover:text-black transition-colors' // 선택되었을 때 클래스
                   : 'text-black border-b-2 border-black' // 선택되지 않았을 때 클래스
               "
-              class="py-1"
-              >경매</RouterLink
+                class="py-1"
+            >경매</RouterLink
             >
             <RouterLink
-              :to="{ name: 'main_funding' }"
-              :class="
+                :to="{ name: 'main_funding' }"
+                :class="
                 isFunding
                   ? 'text-black border-b-2 border-black' // 선택되었을 때 클래스
                   : 'hover:text-black transition-colors' // 선택되지 않았을 때 클래스
               "
-              class="py-1"
-              >펀딩</RouterLink
+                class="py-1"
+            >펀딩</RouterLink
             >
           </nav>
         </div>
@@ -67,18 +67,18 @@ onMounted(() => {
         <div class="flex-1 max-w-md mx-8 hidden md:block">
           <div class="flex items-center gap-2">
             <input
-              v-model="inputQuery"
-              @keyup.enter="onSearchClick"
-              type="text"
-              placeholder="어떤 보석을 찾으시나요?"
-              class="flex-1 h-[44px] bg-gray-50 border border-gray-100 rounded-full px-6 text-sm focus:outline-none focus:border-[#A39382] transition-all placeholder:text-gray-300"
+                v-model="inputQuery"
+                @keyup.enter="onSearchClick"
+                type="text"
+                placeholder="어떤 보석을 찾으시나요?"
+                class="flex-1 h-[44px] bg-gray-50 border border-gray-100 rounded-full px-6 text-sm focus:outline-none focus:border-[#A39382] transition-all placeholder:text-gray-300"
             />
 
             <button
-              @click="onSearchClick"
-              type="button"
-              aria-label="검색 실행"
-              class="w-[44px] h-[44px] flex items-center justify-center bg-white border border-gray-100 text-[#A39382] rounded-full transition-all duration-300 active:scale-95 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1)] hover:border-[#A39382]"
+                @click="onSearchClick"
+                type="button"
+                aria-label="검색 실행"
+                class="w-[44px] h-[44px] flex items-center justify-center bg-white border border-gray-100 text-[#A39382] rounded-full transition-all duration-300 active:scale-95 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1)] hover:border-[#A39382]"
             >
               <i class="fa-solid fa-magnifying-glass text-[14px]"></i>
             </button>
@@ -106,7 +106,7 @@ onMounted(() => {
         <div class="flex items-center space-x-12">
           <RouterLink :to="{ name: 'Main_auction' }">
             <div
-              class="luxury-font text-2xl font-bold tracking-[0.3em] text-[#A39382] uppercase cursor-pointer leading-none mt-[2px]"
+                class="luxury-font text-2xl font-bold tracking-[0.3em] text-[#A39382] uppercase cursor-pointer leading-none mt-[2px]"
             >
               Facet
             </div>
@@ -114,24 +114,24 @@ onMounted(() => {
 
           <nav class="hidden lg:flex items-center space-x-8 text-[14px] font-medium text-gray-500">
             <RouterLink
-              :to="{ name: 'Main_auction' }"
-              :class="[
+                :to="{ name: 'Main_auction' }"
+                :class="[
                 isFunding
                   ? 'hover:text-black transition-colors' // 선택되었을 때 클래스
                   : 'text-black border-b-2 border-black', // 선택되지 않았을 때 클래스
               ]"
-              class="py-1"
-              >경매</RouterLink
+                class="py-1"
+            >경매</RouterLink
             >
             <RouterLink
-              :to="{ name: 'main_funding' }"
-              :class="[
+                :to="{ name: 'main_funding' }"
+                :class="[
                 isFunding
                   ? 'text-black border-b-2 border-black' // 선택되었을 때 클래스
                   : 'hover:text-black transition-colors', // 선택되지 않았을 때 클래스
               ]"
-              class="py-1"
-              >펀딩</RouterLink
+                class="py-1"
+            >펀딩</RouterLink
             >
           </nav>
         </div>
@@ -139,18 +139,18 @@ onMounted(() => {
         <div class="flex-1 max-w-md mx-8 hidden md:block">
           <div class="flex items-center gap-2">
             <input
-              v-model="inputQuery"
-              @keyup.enter="onSearchClick"
-              type="text"
-              placeholder="어떤 보석을 찾으시나요?"
-              class="flex-1 h-[44px] bg-gray-50 border border-gray-100 rounded-full px-6 text-sm focus:outline-none focus:border-[#A39382] transition-all placeholder:text-gray-300"
+                v-model="inputQuery"
+                @keyup.enter="onSearchClick"
+                type="text"
+                placeholder="어떤 보석을 찾으시나요?"
+                class="flex-1 h-[44px] bg-gray-50 border border-gray-100 rounded-full px-6 text-sm focus:outline-none focus:border-[#A39382] transition-all placeholder:text-gray-300"
             />
 
             <button
-              @click="onSearchClick"
-              type="button"
-              aria-label="검색 실행"
-              class="w-[44px] h-[44px] flex items-center justify-center bg-white border border-gray-100 text-[#A39382] rounded-full transition-all duration-300 active:scale-95 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1)] hover:border-[#A39382]"
+                @click="onSearchClick"
+                type="button"
+                aria-label="검색 실행"
+                class="w-[44px] h-[44px] flex items-center justify-center bg-white border border-gray-100 text-[#A39382] rounded-full transition-all duration-300 active:scale-95 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.1)] hover:border-[#A39382]"
             >
               <i class="fa-solid fa-magnifying-glass text-[14px]"></i>
             </button>
@@ -159,13 +159,13 @@ onMounted(() => {
 
         <div class="flex items-center space-x-6">
           <button
-            class="hidden sm:block text-sm text-gray-500 hover:text-black transition-colors font-medium"
+              class="hidden sm:block text-sm text-gray-500 hover:text-black transition-colors font-medium"
           >
             <RouterLink :to="{ name: 'login' }">로그인</RouterLink>
           </button>
           <div class="w-[1px] h-3 bg-gray-200 hidden sm:block"></div>
           <button
-            class="hidden sm:block text-sm text-gray-500 hover:text-black transition-colors font-medium"
+              class="hidden sm:block text-sm text-gray-500 hover:text-black transition-colors font-medium"
           >
             <RouterLink :to="{ name: 'signup' }">회원가입</RouterLink>
           </button>

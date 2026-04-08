@@ -4,7 +4,7 @@
   <!-- 경매가 종료되었을 때 화면 -->
   <div id="auctionStatus" class="bg-[#2B2B2B] text-white border-b border-black">
     <div
-      class="max-w-7xl mx-auto px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+        class="max-w-7xl mx-auto px-6 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
     >
       <div>
         <p class="text-[10px] uppercase tracking-[0.3em] text-gray-300 font-bold">Auction Status</p>
@@ -25,13 +25,13 @@
       <div class="space-y-6">
         <div class="relative bg-gray-50 border border-gray-100 overflow-hidden">
           <img
-            src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80"
-            class="w-full object-cover grayscale"
-            alt="product"
+              src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80"
+              class="w-full object-cover grayscale"
+              alt="product"
           />
 
           <div
-            class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-center"
+              class="absolute inset-0 bg-black/55 flex flex-col items-center justify-center text-center"
           >
             <p class="luxury-font text-3xl tracking-[0.35em] text-white mb-3">AUCTION CLOSED</p>
             <p class="text-sm text-gray-300">This auction has ended</p>
@@ -42,7 +42,7 @@
       <!-- Right -->
       <div class="flex flex-col">
         <span
-          class="inline-block px-3 py-1 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-full mb-4 tracking-widest uppercase"
+            class="inline-block px-3 py-1 bg-gray-200 text-gray-600 text-[10px] font-bold rounded-full mb-4 tracking-widest uppercase"
         >
           Auction Closed
         </span>
@@ -76,8 +76,8 @@
           </div>
 
           <a
-            href="./orders.html"
-            class="inline-block mt-6 px-6 py-4 text-[11px] font-bold uppercase tracking-[0.3em] border border-gray-300 hover:border-[#A39382] hover:text-[#A39382] transition"
+              href="./orders.html"
+              class="inline-block mt-6 px-6 py-4 text-[11px] font-bold uppercase tracking-[0.3em] border border-gray-300 hover:border-[#A39382] hover:text-[#A39382] transition"
           >
             주문 / 배송 확인
           </a>

@@ -79,46 +79,46 @@ onMounted(() => {
   <div v-if="auction_list != null">
     <!-- Hero & Ranking Section -->
     <section
-      class="max-w-[1440px] mx-auto px-4 md:px-10 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8 border-b border-gray-50 pb-12"
+        class="max-w-[1440px] mx-auto px-4 md:px-10 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8 border-b border-gray-50 pb-12"
     >
       <!-- [좌측] 메인 비주얼 슬라이더 -->
       <div
-        class="lg:col-span-9 relative group h-[400px] md:h-[550px] overflow-hidden rounded-md shadow-sm"
+          class="lg:col-span-9 relative group h-[400px] md:h-[550px] overflow-hidden rounded-md shadow-sm"
       >
         <RouterLink :to="`/auction/detail/${auction_list[currentImg]?.idx}`">
           <div id="hero-slider" class="relative w-full h-full">
             <img
-              id="slider-img"
-              :src="auction_list[currentImg]?.image"
-              class="w-full h-full object-cover fade-in"
-              alt="Main Jewelry"
+                id="slider-img"
+                :src="auction_list[currentImg]?.image"
+                class="w-full h-full object-cover fade-in"
+                alt="Main Jewelry"
             />
 
             <div class="absolute inset-0 banner-gradient"></div>
 
             <div
-              class="absolute bottom-10 left-10 text-white max-w-2xl fade-in"
-              id="slider-content"
+                class="absolute bottom-10 left-10 text-white max-w-2xl fade-in"
+                id="slider-content"
             >
               <h2
-                class="text-3xl md:text-5xl font-light font-serif-luxury leading-tight italic mb-4 line-clamp-1"
+                  class="text-3xl md:text-5xl font-light font-serif-luxury leading-tight italic mb-4 line-clamp-1"
               >
                 {{ auction_list[currentImg]?.name }}
               </h2>
               <p
-                id="slider-desc"
-                class="text-sm font-light text-gray-200 leading-loose mb-6 opacity-90"
+                  id="slider-desc"
+                  class="text-sm font-light text-gray-200 leading-loose mb-6 opacity-90"
               >
                 역사적 가치를 지닌 빈티지 주얼리부터, 현대적 마스터피스까지 당신만의 빛을 찾으세요.
               </p>
               <div class="flex space-x-2">
                 <span
-                  class="px-3 py-1 bg-white/60 backdrop-blur-md rounded-full text-[10px] uppercase tracking-widest"
-                  >{{ auction_list[currentImg]?.category }}</span
+                    class="px-3 py-1 bg-white/60 backdrop-blur-md rounded-full text-[10px] uppercase tracking-widest"
+                >{{ auction_list[currentImg]?.category }}</span
                 >
                 <span
-                  class="px-3 py-1 bg-[#A39382] rounded-full text-[10px] uppercase tracking-widest"
-                  >{{ auction_list[currentImg]?.brandName }}</span
+                    class="px-3 py-1 bg-[#A39382] rounded-full text-[10px] uppercase tracking-widest"
+                >{{ auction_list[currentImg]?.brandName }}</span
                 >
               </div>
             </div>
@@ -126,19 +126,19 @@ onMounted(() => {
         </RouterLink>
 
         <div
-          class="absolute bottom-6 right-10 flex items-center space-x-4 text-white text-[10px] tracking-widest z-10"
+            class="absolute bottom-6 right-10 flex items-center space-x-4 text-white text-[10px] tracking-widest z-10"
         >
           <span id="slider-counter">{{ formatNumber(currentImg) }} / 05</span>
           <div class="flex space-x-1">
             <button
-              @click="prevBanner"
-              class="w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/40 rounded-full transition-colors"
+                @click="prevBanner"
+                class="w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/40 rounded-full transition-colors"
             >
               ←
             </button>
             <button
-              @click="nextBanner"
-              class="w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/40 rounded-full transition-colors"
+                @click="nextBanner"
+                class="w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/40 rounded-full transition-colors"
             >
               →
             </button>
@@ -155,16 +155,16 @@ onMounted(() => {
         </div>
         <div class="flex-1 flex flex-col justify-between space-y-4">
           <RouterLink
-            v-for="item in auction_list?.slice(0, 7)"
-            :to="`/auction/detail/${item.idx}`"
-            class="flex items-center space-x-3 group"
+              v-for="item in auction_list?.slice(0, 7)"
+              :to="`/auction/detail/${item.idx}`"
+              class="flex items-center space-x-3 group"
           >
             <span class="text-xl font-bold italic text-[#A39382] w-6">{{ item.idx }}</span>
             <div class="flex-1">
               <p class="text-[13px] font-medium group-hover:underline line-clamp-1">
                 {{ item.name }}
               </p>
-              <p class="text-[11px] text-[#A39382] font-bold">50% 달성</p>
+              <p class="text-[10px] text-[#A39382] font-bold">{{ auction_list[currentImg]?.brandName }}</p>
             </div>
             <div class="w-12 h-12 rounded bg-gray-100 overflow-hidden shrink-0">
               <img :src="item.image" class="w-full h-full object-cover" alt="Ring" />
@@ -173,7 +173,7 @@ onMounted(() => {
         </div>
         <RouterLink :to="{ name: 'auction_list' }">
           <button
-            class="w-full mt-6 py-3 bg-gray-50 text-[11px] text-gray-500 rounded-md hover:bg-gray-100 transition"
+              class="w-full mt-6 py-3 bg-gray-50 text-[11px] text-gray-500 rounded-md hover:bg-gray-100 transition"
           >
             랭킹 전체보기
           </button>
@@ -184,10 +184,10 @@ onMounted(() => {
     <!-- Categories -->
     <section class="max-w-[1440px] mx-auto py-10 px-4 md:px-10">
       <div
-        class="flex items-center justify-between overflow-x-auto no-scrollbar pb-8 border-b border-gray-50"
+          class="flex items-center justify-between overflow-x-auto no-scrollbar pb-8 border-b border-gray-50"
       >
         <div
-          v-for="cat in [
+            v-for="cat in [
             { name: '반지', icon: '💍' },
             { name: '목걸이', icon: '✨' },
             { name: '귀걸이', icon: '💎' },
@@ -198,20 +198,20 @@ onMounted(() => {
             { name: '원석', icon: '🔮' },
             { name: '커스텀', icon: '🛠️' },
           ]"
-          :key="cat.name"
-          class="flex flex-col items-center min-w-[90px] cursor-pointer group"
+            :key="cat.name"
+            class="flex flex-col items-center min-w-[90px] cursor-pointer group"
         >
           <RouterLink
-            :to="`/auction/list?category=${cat.name}`"
-            class="flex flex-col items-center w-full"
+              :to="`/auction/list?category=${cat.name}`"
+              class="flex flex-col items-center w-full"
           >
             <div
-              class="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center text-2xl group-hover:bg-white group-hover:border-[#A39382] border border-transparent transition-all duration-300 shadow-sm mb-3"
+                class="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center text-2xl group-hover:bg-white group-hover:border-[#A39382] border border-transparent transition-all duration-300 shadow-sm mb-3"
             >
               {{ cat.icon }}
             </div>
             <span
-              class="text-[12px] font-medium text-gray-600 group-hover:text-[#A39382] transition-colors"
+                class="text-[12px] font-medium text-gray-600 group-hover:text-[#A39382] transition-colors"
             >
               {{ cat.name }}
             </span>
@@ -226,16 +226,16 @@ onMounted(() => {
         <h2 class="text-2xl font-bold">인기 프로젝트</h2>
         <nav class="flex space-x-4 text-sm font-medium text-gray-400">
           <button
-            @click="((currentFilter = 'all'), displayItems())"
-            :class="currentFilter == 'all' ? 'border-black' : ''"
-            class="px-5 py-2 text-xs font-bold rounded-full transition-all border text-black hover:border-black"
+              @click="((currentFilter = 'all'), displayItems())"
+              :class="currentFilter == 'all' ? 'border-black' : ''"
+              class="px-5 py-2 text-xs font-bold rounded-full transition-all border text-black hover:border-black"
           >
             전체
           </button>
           <button
-            :class="currentFilter == 'imminent' ? 'border-black' : ''"
-            @click="((currentFilter = 'imminent'), displayItems())"
-            class="px-5 py-2 text-xs font-bold rounded-full transition-all border text-black hover:border-black"
+              :class="currentFilter == 'imminent' ? 'border-black' : ''"
+              @click="((currentFilter = 'imminent'), displayItems())"
+              class="px-5 py-2 text-xs font-bold rounded-full transition-all border text-black hover:border-black"
           >
             마감임박
           </button>
@@ -245,41 +245,41 @@ onMounted(() => {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
         <!-- Project Card 1 -->
         <div
-          class="group cursor-pointer flex flex-col h-full"
-          v-for="item in auction_list?.slice(0, 4)"
+            class="group cursor-pointer flex flex-col h-full"
+            v-for="item in auction_list?.slice(0, 4).filter(i => i.status === 'LIVE').slice(0, 4)"
         >
           <div class="aspect-video overflow-hidden bg-gray-100 mb-4 relative rounded-md">
             <RouterLink :to="`/auction/detail/${item.idx}`">
               <img
-                :src="item.image"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                :class="{ 'ended-image': item.status === 'END' }"
-                alt="Jewelry"
+                  :src="item.image"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  :class="{ 'ended-image': item.status === 'END' }"
+                  alt="Jewelry"
               />
             </RouterLink>
 
             <div class="absolute top-3 left-3">
               <span
-                v-if="item.status == 'BEFORE'"
-                class="bg-[#A39382] text-white px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase"
-                >Coming Soon</span
+                  v-if="item.status == 'BEFORE'"
+                  class="bg-[#A39382] text-white px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase"
+              >Coming Soon</span
               >
               <span
-                v-else-if="item.status == 'END'"
-                class="bg-[#000000] text-[#cccccc] px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase"
-                >END</span
+                  v-else-if="item.status == 'END'"
+                  class="bg-[#000000] text-[#cccccc] px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase"
+              >END</span
               >
               <span
-                v-else
-                class="bg-[#CC0000] text-white px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase"
-                >Live</span
+                  v-else
+                  class="bg-[#CC0000] text-white px-2 py-0.5 text-[10px] font-bold rounded-sm uppercase"
+              >Live</span
               >
             </div>
           </div>
           <div class="flex flex-col flex-grow">
             <!-- min-h-[48px]를 통해 제목이 1줄이어도 2줄 높이를 차지하게 하여 아래 요소들의 위치를 고정합니다 -->
             <h3
-              class="text-md font-bold leading-snug group-hover:text-[#A39382] transition-colors line-clamp-2 min-h-[48px]"
+                class="text-md font-bold leading-snug group-hover:text-[#A39382] transition-colors line-clamp-2 min-h-[48px]"
             >
               {{ item.name }}
             </h3>
@@ -294,9 +294,8 @@ onMounted(() => {
               </div>
               <div class="flex justify-between items-center mt-3">
                 <div class="flex items-center space-x-2">
-                  <span class="font-bold text-lg"> 3일 남음</span>
                   <span class="text-[13px] font-medium text-gray-400 italic"
-                    >₩ {{ item?.startPrice.toLocaleString() }}</span
+                  >₩ {{ item?.startPrice.toLocaleString() }}</span
                   >
                 </div>
                 <span class="text-[12px] text-gray-400">
@@ -310,7 +309,7 @@ onMounted(() => {
 
       <div class="flex justify-center mt-20">
         <button
-          class="px-10 py-3 border border-gray-200 text-sm font-medium hover:bg-gray-50 transition rounded-md"
+            class="px-10 py-3 border border-gray-200 text-sm font-medium hover:bg-gray-50 transition rounded-md"
         >
           <RouterLink :to="{ name: 'auction_list' }">프로젝트 더보기</RouterLink>
         </button>
