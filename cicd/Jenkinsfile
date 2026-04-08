@@ -37,8 +37,8 @@ spec:
       volumeMounts:
         - name: workspace         # 프로젝트 공유 공간
           mountPath: /workspace
-        - name: workspace-volume  # 젠킨스가 sh를 실행하는 기본 위치
-          mountPath: /home/jenkins/agent
+        // - name: workspace-volume  # 젠킨스가 sh를 실행하는 기본 위치
+        //   mountPath: /home/jenkins/agent
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command: ['/busybox/sh','-c','sleep infinity']

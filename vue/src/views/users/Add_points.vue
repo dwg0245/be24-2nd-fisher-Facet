@@ -86,8 +86,8 @@ const changePoint = async () => {
     // 2. 포트원 실제 결제창 띄우기
     // ==========================================================
     const paymentResponse = await PortOne.requestPayment({
-      storeId: "store-6d92075a-fcc0-4920-afaf-b9df41abe7ec",
-      channelKey: "channel-key-5d4867e9-7b9c-4530-83f9-cf13dbe67c57", 
+      storeId: "store-c4620c46-17fa-4ebc-ac59-8d04c156cbf4",
+      channelKey: "channel-key-dafcb684-1f58-465d-9fad-97b92723116d", 
       paymentId: uniquePaymentId, // 백엔드에서 받아온 주문번호 사용
       orderName: `Facet 포인트 ${totalPoints.value.toLocaleString()}원 충전`,
       totalAmount: totalPoints.value,
